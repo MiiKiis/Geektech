@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { parsePrices, mostrarPrecio } from '../lib/price';
 import ProductCard, { Product } from './ProductCard';
 
 interface ProductGridProps {
@@ -26,19 +27,13 @@ const ProductGrid: React.FC<ProductGridProps> = ({ category, viewMode = 'grid' }
 
                 const data = await res.json();
 
-                const parsePrices = (str: string) => {
-                    if (!str) return [];
-                    return str.split(',').map(p => {
-                        const [label, val] = p.split(':');
-                        return { label: label?.trim(), value: parseFloat(val) };
-                    }).filter(x => x.label && !isNaN(x.value));
-                };
+                // parsing handled by shared utility `parsePrices`
 
                 const mapped: Product[] = data.map((item: any) => ({
                     id: item.id,
                     title: item.nombre,
                     subtitle: item.categoria || item.server_info || '',
-                    price: 0,
+                    price: mostrarPrecio(item),
                     img: item.imagen_url || item.imagen || '/img/placeholder.jpg',
                     prices: parsePrices(item.variantes_precio),
                     genre: item.categoria || '',

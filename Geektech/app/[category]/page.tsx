@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import ProductCard, { Product } from '../components/ProductCard';
+import { parsePrices, mostrarPrecio } from '../lib/price';
 import ProductFilter from '../components/ProductFilter';
 
 export default function CategoryPage() {
@@ -28,19 +29,13 @@ export default function CategoryPage() {
                 if (!res.ok) throw new Error('Failed to fetch');
                 const data = await res.json();
 
-                const parsePrices = (str: string) => {
-                    if (!str) return [];
-                    return str.split(',').map(p => {
-                        const [label, val] = p.split(':');
-                        return { label: label?.trim(), value: parseFloat(val) };
-                    }).filter(x => x.label && !isNaN(x.value));
-                };
+                // price parsing handled by shared utility
 
                 const mapped: Product[] = data.map((item: any) => ({
                     id: item.id,
                     title: item.nombre,
                     subtitle: item.categoria || item.server_info || item.tipo || item.plataforma || '',
-                    price: item.precio ? parseFloat(item.precio) : 0,
+                    price: mostrarPrecio(item),
                     img: item.imagen_url || item.imagen || '/img/placeholder.jpg',
                     prices: parsePrices(item.variantes_precio),
                     genre: item.categoria || item.tipo || '',

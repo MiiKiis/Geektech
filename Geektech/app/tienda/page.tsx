@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import ProductCard from '../components/ProductCard';
+import { parsePrices, mostrarPrecio } from '../lib/price';
 
 interface SearchResult {
     id: string | number;
@@ -129,13 +130,7 @@ function TiendaContent() {
         return true;
     });
 
-    const parsePrices = (str: string) => {
-        if (!str) return [];
-        return str.split(',').map((v: string) => {
-            const [l, val] = v.split(':');
-            return { label: l.trim(), value: parseFloat(val) };
-        }).filter((x: any) => x.label && !isNaN(x.value));
-    };
+    // parsePrices and mostrarPrecio provided by shared utility
 
     return (
         <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8 min-h-screen" style={{ paddingTop: '100px', paddingBottom: '32px' }}>
@@ -293,7 +288,7 @@ function TiendaContent() {
                         {filteredProducts.map(p => (
                             <ProductCard key={p.id} product={{
                                 id: p.id, title: p.nombre, subtitle: p.server_info,
-                                img: p.imagen_url || '/img/placeholder.jpg', price: 0,
+                                img: p.imagen_url || '/img/placeholder.jpg', price: mostrarPrecio(p),
                                 prices: parsePrices(p.variantes_precio), genre: p.categoria
                             }} viewMode={viewMode} />
                         ))}

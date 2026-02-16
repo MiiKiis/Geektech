@@ -55,7 +55,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
                         {product.subtitle && (
                             <p className="text-sm text-gray-400 mb-2 line-clamp-2">{product.subtitle}</p>
                         )}
-                        {(product.prices && product.prices.length > 0) ? (
+                        {typeof product.price === 'string' && product.price ? (
+                            <div className="text-xl font-bold text-purple-400 mb-4">{product.price}</div>
+                        ) : (product.prices && product.prices.length > 0) ? (
                             <span className="inline-block px-2 py-1 text-xs font-semibold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 rounded-full mb-4">
                                 Opciones Disponibles
                             </span>
