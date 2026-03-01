@@ -1,7 +1,7 @@
 import { neon } from '@neondatabase/serverless';
 import { NextResponse } from 'next/server';
 
-export const revalidate = 60; // Revalidate every 60 seconds
+export const revalidate = 0; // Sin caché de Next.js, 100% dinámico
 
 export async function GET() {
     try {
@@ -10,15 +10,11 @@ export async function GET() {
         }
         const sql = neon(process.env.DATABASE_URL);
         const data = await sql`
-            SELECT id, nombre, descripcion, precio, imagen_url, categoria, tipo, variantes_precio
+            SELECT id, nombre, descripcion, precio, imagen_url, categoria, tipo, variantes_precio, posicion
             FROM componentes_pcs
-            ORDER BY categoria ASC, nombre ASC
+            ORDER BY posicion ASC NULLS LAST, id ASC
         `;
-        return NextResponse.json(data, {
-            headers: {
-                'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
-            },
-        });
+        return NextResponse.json(data);
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
