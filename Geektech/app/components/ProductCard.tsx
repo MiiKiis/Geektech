@@ -41,6 +41,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
                     <motion.img
                         src={product.img}
                         alt={product.title}
+                        loading="lazy"
                         className="w-full h-full object-cover"
                         whileHover={{ scale: 1.1 }}
                         transition={{ duration: 0.5 }}

@@ -39,18 +39,38 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
     const jsonLd = {
         '@context': 'https://schema.org',
-        '@type': 'Store',
-        name: 'GeekTech Store',
-        image: 'https://geektech.bo/images/logo.png',
-        description: 'Tienda líder en venta de software, hardware y servicios digitales.',
-        address: {
-            '@type': 'PostalAddress',
-            streetAddress: 'Av. 6 de marzo',
-            addressLocality: 'La Paz,El Alto',
-            addressCountry: 'BO'
-        },
-        priceRange: '$$',
-        url: 'https://geektech.onl'
+        '@graph': [
+            {
+                '@type': 'WebSite',
+                '@id': 'https://geektech.onl/#website',
+                'url': 'https://geektech.onl/',
+                'name': 'GeekTech Store',
+                'description': 'La mejor tienda tecnológica en Bolivia. Encuentra licencias de software, componentes de PC, servicio técnico y cuentas de streaming.',
+                'potentialAction': [{
+                    '@type': 'SearchAction',
+                    'target': 'https://geektech.onl/mantenimiento-componentes?search={search_term_string}',
+                    'query-input': 'required name=search_term_string'
+                }]
+            },
+            {
+                '@type': 'Store',
+                '@id': 'https://geektech.onl/#organization',
+                'name': 'GeekTech Store',
+                'url': 'https://geektech.onl/',
+                'logo': 'https://geektech.onl/img/principal/logo.png',
+                'image': 'https://geektech.onl/images/og-image.jpg',
+                'description': 'Tienda líder en venta de software, hardware y servicios digitales en Bolivia.',
+                'telephone': '+59168190472',
+                'address': {
+                    '@type': 'PostalAddress',
+                    'streetAddress': 'Av. 6 de marzo',
+                    'addressLocality': 'El Alto',
+                    'addressRegion': 'La Paz',
+                    'addressCountry': 'BO'
+                },
+                'priceRange': '$$'
+            }
+        ]
     };
 
     return (

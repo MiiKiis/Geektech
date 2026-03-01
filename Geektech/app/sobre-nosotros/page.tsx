@@ -1,8 +1,21 @@
 import React from 'react';
 
-export const metadata = {
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
     title: 'Sobre Nosotros',
-    description: 'Conoce más sobre GeekTech, nuestra misión y por qué somos tu mejor opción en licencias y servicios digitales.'
+    description: 'Conoce más sobre GeekTech, nuestra misión y por qué somos tu mejor opción en licencias y servicios digitales en Bolivia.',
+    keywords: ['sobre nosotros geektech', 'quienes somos', 'historia geektech', 'mision y vision', 'empresa tecnologia bolivia'],
+    openGraph: {
+        title: 'Sobre Nosotros | GeekTech Store',
+        description: 'Conoce más sobre GeekTech, nuestra misión y por qué somos tu mejor opción en licencias y servicios digitales.',
+        url: 'https://geektech.onl/sobre-nosotros',
+        type: 'website',
+    },
+    twitter: {
+        title: 'Sobre Nosotros | GeekTech Store',
+        description: 'Conoce más sobre GeekTech, nuestra misión y por qué somos tu mejor opción en licencias y servicios digitales.',
+    }
 };
 
 export default function SobreNosotrosPage() {

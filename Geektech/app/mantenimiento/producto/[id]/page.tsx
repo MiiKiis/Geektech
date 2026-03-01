@@ -24,9 +24,26 @@ export async function generateMetadata(
     const { id } = await params;
     const product = await fetchProduct(id);
     if (!product) return { title: 'Producto no encontrado | GeekTech' };
+    const title = `${product.nombre} | GeekTech Mantenimiento y Tienda`;
+    const description = product.descripcion ?? `Compra ${product.nombre} en GeekTech. El mejor servicio técnico y componentes de PC en Bolivia.`;
+    const image = product.imagen_url && !product.imagen_url.includes('placeholder') ? product.imagen_url : 'https://geektech.onl/images/og-image.jpg';
+
     return {
-        title: `${product.nombre} | GeekTech Mantenimiento y Tienda`,
-        description: product.descripcion ?? `Detalle de ${product.nombre} en GeekTech.`,
+        title: title,
+        description: description,
+        openGraph: {
+            title: title,
+            description: description,
+            url: `https://geektech.onl/mantenimiento/producto/${id}`,
+            type: 'article',
+            images: [{ url: image }],
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: title,
+            description: description,
+            images: [image],
+        }
     };
 }
 

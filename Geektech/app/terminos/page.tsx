@@ -1,8 +1,21 @@
 import React from 'react';
 
-export const metadata = {
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
     title: 'Términos y Condiciones',
-    description: 'Términos y condiciones de uso de GeekTech.'
+    description: 'Términos, condiciones de uso y políticas de la tienda en línea y servicios digitales de GeekTech.',
+    keywords: ['terminos geektech', 'condiciones de uso', 'politicas reembolso', 'reglas streaming', 'terminos legales'],
+    openGraph: {
+        title: 'Términos y Condiciones | GeekTech Store',
+        description: 'Términos y condiciones de uso y políticas de GeekTech.',
+        url: 'https://geektech.onl/terminos',
+        type: 'website',
+    },
+    twitter: {
+        title: 'Términos y Condiciones | GeekTech Store',
+        description: 'Términos y condiciones de uso y políticas de GeekTech.',
+    }
 };
 
 export default function TerminosPage() {

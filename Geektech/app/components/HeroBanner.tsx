@@ -47,7 +47,8 @@ export default function HeroBanner() {
             <img
                 src={cfg.imagen_url || '/img/principal/banner.svg'}
                 className="hero-bg-image"
-                alt="Banner Geektech"
+                alt="Banner Geektech - Tienda de Software y Hardware"
+                fetchPriority="high"
                 style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 1 }}
                 onError={(e) => { (e.target as HTMLImageElement).src = '/img/principal/banner.svg'; }}
             />
