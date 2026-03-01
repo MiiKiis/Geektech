@@ -99,6 +99,11 @@ body {
     min-height: 100vh;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+}
+
+html {
+    overflow-x: hidden;
 }
 
 a {
@@ -1500,6 +1505,215 @@ footer {
     font-weight: 700;
 }
 
+/* ================= SOCIAL ICON BUTTONS (Header) ================= */
+
+.social-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    flex-shrink: 0;
+    text-decoration: none;
+}
+
+.social-icon-btn:hover {
+    transform: translateY(-3px) scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.social-icon-btn.discord-btn {
+    color: #5865F2;
+}
+
+.social-icon-btn.discord-btn:hover {
+    background: rgba(88, 101, 242, 0.2);
+    border-color: rgba(88, 101, 242, 0.5);
+    box-shadow: 0 6px 20px rgba(88, 101, 242, 0.4);
+}
+
+.social-icon-btn.whatsapp-btn {
+    color: #25D366;
+}
+
+.social-icon-btn.whatsapp-btn:hover {
+    background: rgba(37, 211, 102, 0.2);
+    border-color: rgba(37, 211, 102, 0.5);
+    box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
+}
+
+/* ================= HAMBURGER BUTTON ================= */
+
+.hamburger-btn {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+    transition: background 0.2s;
+    z-index: 1100;
+    position: relative;
+}
+
+.hamburger-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.hamburger-btn span {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: var(--text-main);
+    border-radius: 2px;
+    transition: all 0.35s cubic-bezier(0.68, -0.6, 0.32, 1.6);
+    transform-origin: center;
+}
+
+/* Animación X al abrir */
+.hamburger-btn.open span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+
+.hamburger-btn.open span:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0);
+}
+
+.hamburger-btn.open span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ================= MOBILE MENU ================= */
+
+.mobile-menu {
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(10, 10, 15, 0.98);
+    backdrop-filter: blur(20px);
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    padding: 2rem 1.5rem;
+    gap: 2rem;
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+}
+
+/* Evitar que el mobile menu sea visible en Desktop si se cambia el tamaño de pantalla */
+@media (min-width: 1025px) {
+
+    .mobile-menu,
+    .mobile-overlay {
+        display: none !important;
+    }
+}
+
+.mobile-menu.open {
+    transform: translateX(0);
+}
+
+.mobile-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.mobile-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.2rem;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    text-decoration: none;
+}
+
+.mobile-nav-link:hover,
+.mobile-nav-link.active {
+    background: rgba(112, 0, 255, 0.1);
+    border-color: rgba(112, 0, 255, 0.3);
+    color: var(--text-main);
+}
+
+.mobile-nav-link.active {
+    color: var(--accent);
+}
+
+.mobile-nav-link svg {
+    flex-shrink: 0;
+    opacity: 0.7;
+}
+
+.mobile-social {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: auto;
+    padding-bottom: 1rem;
+}
+
+.mobile-social-btn {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.2rem;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-decoration: none;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+    transition: all 0.2s ease;
+}
+
+.mobile-social-btn.discord-btn {
+    color: #5865F2;
+}
+
+.mobile-social-btn.discord-btn:hover {
+    background: rgba(88, 101, 242, 0.15);
+    border-color: rgba(88, 101, 242, 0.4);
+}
+
+.mobile-social-btn.whatsapp-btn {
+    color: #25D366;
+}
+
+.mobile-social-btn.whatsapp-btn:hover {
+    background: rgba(37, 211, 102, 0.15);
+    border-color: rgba(37, 211, 102, 0.4);
+}
+
+.mobile-overlay {
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+}
+
 /* ================= CHAT WIDGET ================= */
 .chat-widget {
     position: fixed;
@@ -1578,9 +1792,9 @@ footer {
     background: var(--bg-card-hover);
 }
 
-.chat-option.:hover {
+.chat-option.discord:hover {
     background: #5865F2;
-    /*  Color */
+    /* Discord Color */
     color: white;
 }
 
@@ -1602,6 +1816,29 @@ footer {
     }
 }
 
+/* ================= RESPONSIVE BREAKPOINTS ================= */
+
+/* Tablet: hasta 1024px → ocultar nav desktop, mostrar hamburguesa */
+@media (max-width: 1024px) {
+    .main-nav {
+        display: none;
+    }
+
+    .hamburger-btn {
+        display: flex;
+    }
+
+    /* Ocultar iconos sociales en header en tablet pequeña para ahorrar espacio */
+    .social-icon-btn {
+        display: none;
+    }
+
+    .header-inner {
+        gap: 1rem;
+    }
+}
+
+/* Tablet: layout de 2 columnas a 1 columna */
 @media (max-width: 900px) {
     .container {
         grid-template-columns: 1fr;
@@ -1612,16 +1849,35 @@ footer {
         position: static;
         margin-bottom: 1rem;
     }
+
+    .games-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .modal-content {
+        padding: 1.5rem;
+        margin: 0.5rem;
+        border-radius: 16px;
+    }
 }
 
+/* Móvil: 1 columna, ajustes de texto y padding */
 @media (max-width: 600px) {
     .header-inner {
         padding: 0 1rem;
-        gap: 1rem;
+        gap: 0.5rem;
     }
 
-    .logo {
-        font-size: 1.4rem;
+    .nav-actions {
+        gap: 0.8rem;
+    }
+
+    .brand-name {
+        font-size: 1.2rem;
+    }
+
+    .logo-img {
+        width: 45px;
     }
 
     .search-input {
@@ -1632,10 +1888,48 @@ footer {
         grid-template-columns: 1fr;
     }
 
+    .games-grid.home-grid {
+        grid-template-columns: 1fr;
+    }
+
     .cart-dropdown {
         width: 90vw;
         right: -1rem;
-        /* Adjust for container padding */
+    }
+
+    .hero-content h1 {
+        font-size: 2rem;
+    }
+
+    .hero-content p {
+        font-size: 1rem;
+    }
+
+    .antigravity-hero {
+        min-height: 400px;
+    }
+
+    .toast {
+        min-width: unset;
+        width: calc(100vw - 2rem);
+        right: 0;
+        left: 0;
+        margin: 0 auto;
+    }
+
+    .modal-content {
+        padding: 1rem;
+        margin: 0;
+        border-radius: 0;
+        height: 100%;
+    }
+
+    .global-modal {
+        padding: 0;
+    }
+
+    .package-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 

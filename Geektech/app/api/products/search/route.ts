@@ -17,16 +17,14 @@ export async function GET(request: Request) {
         const sql = neon(process.env.DATABASE_URL);
         const searchTerm = `%${query}%`;
 
-        // Search across all 4 tables in parallel
-        const [homeGame, tienda, windowsKeys, streaming] = await Promise.all([
-            sql`SELECT id, nombre, imagen_url, categoria, variantes_precio FROM home_game WHERE LOWER(nombre) LIKE LOWER(${searchTerm}) OR LOWER(categoria) LIKE LOWER(${searchTerm}) LIMIT 5`,
-            sql`SELECT id, nombre, imagen_url, categoria FROM tienda WHERE LOWER(nombre) LIKE LOWER(${searchTerm}) OR LOWER(categoria) LIKE LOWER(${searchTerm}) LIMIT 5`,
-            sql`SELECT id, nombre, imagen_url, tipo, precio FROM windows_keys WHERE LOWER(nombre) LIKE LOWER(${searchTerm}) OR LOWER(tipo) LIKE LOWER(${searchTerm}) LIMIT 5`,
+        const [homeGame, componentes, streaming] = await Promise.allSettled([
+            sql`SELECT id, nombre, imagen_url, categoria FROM home_game WHERE LOWER(nombre) LIKE LOWER(${searchTerm}) OR LOWER(categoria) LIKE LOWER(${searchTerm}) LIMIT 5`,
+            sql`SELECT id, nombre, imagen_url, categoria, tipo, precio FROM componentes_pcs WHERE LOWER(nombre) LIKE LOWER(${searchTerm}) OR LOWER(categoria) LIKE LOWER(${searchTerm}) OR LOWER(tipo) LIKE LOWER(${searchTerm}) LIMIT 5`,
             sql`SELECT id, nombre, imagen_url, plataforma, duracion, precio FROM cuentas_streaming WHERE LOWER(nombre) LIKE LOWER(${searchTerm}) OR LOWER(plataforma) LIKE LOWER(${searchTerm}) LIMIT 5`,
         ]);
 
         const results = [
-            ...homeGame.map((p: any) => ({
+            ...(homeGame.status === 'fulfilled' ? homeGame.value : []).map((p: any) => ({
                 id: p.id,
                 nombre: p.nombre,
                 imagen_url: p.imagen_url,
@@ -35,25 +33,16 @@ export async function GET(request: Request) {
                 link: '/',
                 price: null,
             })),
-            ...tienda.map((p: any) => ({
-                id: `t-${p.id}`,
+            ...(componentes.status === 'fulfilled' ? componentes.value : []).map((p: any) => ({
+                id: `c-${p.id}`,
                 nombre: p.nombre,
                 imagen_url: p.imagen_url,
-                category: 'Tienda',
-                subcategory: p.categoria,
-                link: '/tienda',
-                price: null,
-            })),
-            ...windowsKeys.map((p: any) => ({
-                id: `w-${p.id}`,
-                nombre: p.nombre,
-                imagen_url: p.imagen_url,
-                category: 'Software & Licencias',
-                subcategory: p.tipo,
-                link: '/windows-keys',
+                category: 'Mantenimiento',
+                subcategory: p.tipo || p.categoria,
+                link: '/mantenimiento-componentes',
                 price: p.precio ? parseFloat(p.precio) : null,
             })),
-            ...streaming.map((p: any) => ({
+            ...(streaming.status === 'fulfilled' ? streaming.value : []).map((p: any) => ({
                 id: `s-${p.id}`,
                 nombre: p.nombre,
                 imagen_url: p.imagen_url,

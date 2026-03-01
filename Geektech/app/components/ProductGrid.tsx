@@ -19,7 +19,7 @@ const ProductGrid: React.FC<ProductGridProps> = ({ category, viewMode = 'grid' }
             try {
                 let url = `/api/products/${category || 'tienda'}`;
                 if (category === 'juegos') url = '/api/products/tienda';
-                if (category === 'windows') url = '/api/products/windows-keys';
+                if (category === 'mantenimiento-componentes') url = '/api/products/mantenimiento-componentes';
                 if (category === 'streaming') url = '/api/products/cuentas-streaming';
 
                 const res = await fetch(url);

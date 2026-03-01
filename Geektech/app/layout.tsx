@@ -45,11 +45,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         description: 'Tienda líder en venta de software, hardware y servicios digitales.',
         address: {
             '@type': 'PostalAddress',
-            streetAddress: 'Av. Principal 123',
-            addressLocality: 'La Paz',
+            streetAddress: 'Av. 6 de marzo',
+            addressLocality: 'La Paz,El Alto',
             addressCountry: 'BO'
         },
-        telephone: '+591-60000000',
         priceRange: '$$',
         url: 'https://geektech.onl'
     };
@@ -57,7 +56,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     return (
         <html lang="es" className="dark" style={{ colorScheme: 'dark' }} data-theme="dark" suppressHydrationWarning>
             <head>
-                <link rel="stylesheet" href="/css/styles.css" />
+                <link rel="stylesheet" href="/css/styles.css?v=2" />
             </head>
             <body className="bg-[#0f0f12] text-white antialiased" suppressHydrationWarning>
                 <script

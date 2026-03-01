@@ -22,7 +22,7 @@ export default function CategoryPage() {
             try {
                 let url = `/api/products/${category}`;
                 if (category === 'juegos') url = '/api/products/tienda';
-                if (category === 'windows') url = '/api/products/windows-keys';
+                if (category === 'mantenimiento-componentes') url = '/api/products/mantenimiento-componentes';
                 if (category === 'streaming') url = '/api/products/cuentas-streaming';
 
                 const res = await fetch(url);
@@ -55,8 +55,7 @@ export default function CategoryPage() {
     const categoryTitles: Record<string, string> = {
         'tienda': 'Tienda',
         'juegos': 'Juegos',
-        'windows-keys': 'Software & Licencias',
-        'windows': 'Software & Licencias',
+        'mantenimiento-componentes': 'PC & Componentes',
         'cuentas-streaming': 'Cuentas Streaming',
         'streaming': 'Cuentas Streaming',
         'home-game': 'Destacados',
@@ -65,8 +64,7 @@ export default function CategoryPage() {
     const categoryAccents: Record<string, string> = {
         'tienda': 'purple',
         'juegos': 'purple',
-        'windows-keys': 'blue',
-        'windows': 'blue',
+        'mantenimiento-componentes': 'orange',
         'cuentas-streaming': 'green',
         'streaming': 'green',
         'home-game': 'purple',
