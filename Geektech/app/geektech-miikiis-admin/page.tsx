@@ -102,9 +102,9 @@ export default function AdminPage() {
             const meta = SECTION_META[sec as keyof typeof SECTION_META];
             const res = await fetch(meta.api);
             const data = await res.json();
-            if (sec === 'inicio') setHomeData(data);
-            if (sec === 'mantenimiento') setMantData(data);
-            if (sec === 'streaming') setStreamData(data);
+            if (sec === 'inicio') setHomeData(Array.isArray(data) ? data : []);
+            if (sec === 'mantenimiento') setMantData(Array.isArray(data) ? data : []);
+            if (sec === 'streaming') setStreamData(Array.isArray(data) ? data : []);
         } catch { showToast('Error al cargar datos', false); }
         finally { setLoading(false); }
     }, []);
@@ -120,9 +120,9 @@ export default function AdminPage() {
             mantenimiento: m.status === 'fulfilled' && Array.isArray(m.value) ? m.value.length : 0,
             streaming: s.status === 'fulfilled' && Array.isArray(s.value) ? s.value.length : 0,
         });
-        if (h.status === 'fulfilled') setHomeData(h.value);
-        if (m.status === 'fulfilled') setMantData(m.value);
-        if (s.status === 'fulfilled') setStreamData(s.value);
+        if (h.status === 'fulfilled') setHomeData(Array.isArray(h.value) ? h.value : []);
+        if (m.status === 'fulfilled') setMantData(Array.isArray(m.value) ? m.value : []);
+        if (s.status === 'fulfilled') setStreamData(Array.isArray(s.value) ? s.value : []);
     }, []);
 
     useEffect(() => { if (authed) { loadAll(); loadBanner(); } }, [authed, loadAll]);
@@ -244,19 +244,19 @@ export default function AdminPage() {
     };
 
     // ── Computed data (ordered by posicion) ──
-    const currentData = (section === 'inicio' ? homeData : section === 'streaming' ? streamData : mantData)
-        .slice().sort((a: any, b: any) => (a.posicion ?? 9999) - (b.posicion ?? 9999));
+    const currentList = section === 'inicio' ? homeData : section === 'streaming' ? streamData : mantData;
+    const currentData = Array.isArray(currentList) ? currentList.slice().sort((a: any, b: any) => (a.posicion ?? 9999) - (b.posicion ?? 9999)) : [];
     const filtered = currentData.filter((p: any) => !search || p.nombre?.toLowerCase().includes(search.toLowerCase()) || (p.tipo ?? p.plataforma ?? '').toLowerCase().includes(search.toLowerCase()));
 
     // ════════════════════════════════════════════════════════
     // LOGIN
     // ════════════════════════════════════════════════════════
     if (!authed) return (
-        <div style={S.page}>
-            <div style={{ ...S.card, maxWidth: 380, margin: '0 auto', padding: 40 }}>
+        <div style={{ ...S.page, paddingTop: 100, paddingLeft: 20, paddingRight: 20 }}>
+            <div style={{ ...S.card, maxWidth: 380, margin: '0 auto', padding: 32 }}>
                 <div style={{ textAlign: 'center', marginBottom: 32 }}>
                     <div style={{ fontSize: 52, marginBottom: 12 }}>🔐</div>
-                    <h1 style={S.h1}>Panel de Administración</h1>
+                    <h1 style={{ ...S.h1, fontSize: 20 }}>Panel de Administración</h1>
                     <p style={S.muted}>GeekTech — Solo para administradores</p>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -282,11 +282,25 @@ export default function AdminPage() {
             {/* Toast */}
             {toast && <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 9999, padding: '13px 20px', borderRadius: 12, fontWeight: 600, fontSize: 14, background: toast.ok ? '#065f46' : '#7f1d1d', border: `1px solid ${toast.ok ? '#10b981' : '#ef4444'}`, color: '#fff', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>{toast.msg}</div>}
 
-            <div style={{ maxWidth: '100%', margin: '0 auto', padding: '32px 32px', display: 'grid', gridTemplateColumns: '260px 1fr', gap: 32, alignItems: 'start' }}>
+            {/* HEADER MÓVIL */}
+            <div className="md:hidden flex items-center justify-between p-4 border-b border-white/10 bg-[#17171f] sticky top-[72px] z-[50]">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>⚡</div>
+                    <div>
+                        <p style={{ color: '#fff', fontWeight: 800, fontSize: 14, margin: 0 }}>GeekTech</p>
+                        <p style={{ color: '#6b7280', fontSize: 10, margin: 0 }}>Admin Panel</p>
+                    </div>
+                </div>
+                <button onClick={() => setMenuOpen(!menuOpen)} style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 24, cursor: 'pointer', padding: 4 }}>
+                    {menuOpen ? '✕' : '☰'}
+                </button>
+            </div>
+
+            <div className={`max-w-full mx-auto p-4 md:p-8 flex flex-col md:grid md:grid-cols-[260px_1fr] md:gap-8 gap-6 items-start relative`}>
 
                 {/* ── SIDEBAR ── */}
-                <aside style={{ ...S.card, padding: 24, position: 'sticky', top: 82 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28, padding: '4px 0' }}>
+                <aside className={`${menuOpen ? 'block' : 'hidden'} md:block md:sticky md:top-[82px] w-full z-40`} style={{ ...S.card, padding: 24 }}>
+                    <div className="hidden md:flex" style={{ alignItems: 'center', gap: 12, marginBottom: 28, padding: '4px 0' }}>
                         <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>⚡</div>
                         <div>
                             <p style={{ color: '#fff', fontWeight: 800, fontSize: 16, margin: 0 }}>GeekTech</p>
@@ -335,18 +349,18 @@ export default function AdminPage() {
                             <p style={{ ...S.muted, marginBottom: 32 }}>Desde aquí puedes agregar, editar y eliminar todos los productos de tu tienda.</p>
 
                             {/* Stats cards */}
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20, marginBottom: 20 }}>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-5">
 
                                 {/* Banner card — full width destacado */}
                                 <button onClick={() => goTo('banner')}
-                                    style={{ ...S.card, padding: 28, cursor: 'pointer', border: '2px solid #f59e0b40', textAlign: 'left', background: 'linear-gradient(135deg,rgba(245,158,11,0.08),rgba(239,68,68,0.04))', gridColumn: '1 / -1', transition: 'border-color 0.2s' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-                                        <div style={{ fontSize: 52 }}>🖼️</div>
+                                    style={{ ...S.card, padding: '24px', cursor: 'pointer', border: '2px solid #f59e0b40', textAlign: 'left', background: 'linear-gradient(135deg,rgba(245,158,11,0.08),rgba(239,68,68,0.04))', gridColumn: '1 / -1', transition: 'border-color 0.2s' }}>
+                                    <div className="flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6">
+                                        <div style={{ fontSize: 44 }}>🖼️</div>
                                         <div style={{ flex: 1 }}>
                                             <div style={{ color: '#fbbf24', fontWeight: 800, fontSize: 20, marginBottom: 6 }}>✨ Banner Principal</div>
-                                            <div style={{ color: '#9ca3af', fontSize: 14, lineHeight: 1.5 }}>Cambia el título, subtítulo, botón e imagen del banner que ven tus clientes al entrar al sitio. Los cambios se aplican al instante.</div>
+                                            <div style={{ color: '#9ca3af', fontSize: 13, lineHeight: 1.5 }}>Cambia el título, subtítulo, botón e imagen del banner que ven tus clientes al entrar al sitio. Los cambios se aplican al instante.</div>
                                         </div>
-                                        <div style={{ padding: '12px 24px', borderRadius: 12, background: '#f59e0b20', color: '#fbbf24', fontWeight: 700, fontSize: 15, border: '1px solid #f59e0b40', whiteSpace: 'nowrap', flexShrink: 0 }}>✏️ Editar Banner →</div>
+                                        <div style={{ padding: '10px 20px', borderRadius: 12, background: '#f59e0b20', color: '#fbbf24', fontWeight: 700, fontSize: 14, border: '1px solid #f59e0b40', whiteSpace: 'nowrap', flexShrink: 0, alignSelf: 'flex-start' }}>✏️ Editar Banner →</div>
                                     </div>
                                 </button>
 
@@ -433,7 +447,7 @@ export default function AdminPage() {
                             </div>
 
                             {/* Edit fields */}
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
                                 <div style={{ ...S.card, padding: 24, gridColumn: '1 / -1' }}>
                                     <p style={{ color: '#fbbf24', fontWeight: 700, fontSize: 14, margin: '0 0 16px' }}>📝 Textos principales</p>
