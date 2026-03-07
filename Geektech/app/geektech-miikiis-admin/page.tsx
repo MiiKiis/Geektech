@@ -5,10 +5,10 @@ import { useEffect, useState, useCallback } from 'react';
 // ── Types ────────────────────────────────────────────────────
 type Section = 'dashboard' | 'banner' | 'inicio' | 'mantenimiento' | 'streaming';
 
-interface BaseProduct { id: number; nombre: string; descripcion: string | null; precio: string | null; imagen_url: string | null; variantes_precio: string | null; posicion: number | null; }
+interface BaseProduct { id: number; nombre: string; descripcion: string | null; precio: string | null; imagen_url: string | null; variantes_precio: string | null; posicion: number | null; destacado?: boolean; agotado?: boolean; }
 interface HomeProduct extends BaseProduct { categoria: string | null; }
 interface MantProduct extends BaseProduct { categoria: string; tipo: string | null; }
-interface StreamProduct extends BaseProduct { plataforma: string | null; duracion: string | null; }
+interface StreamProduct extends BaseProduct { plataforma: string | null; duracion: string | null; destacado?: boolean; imagenes_adicionales?: any; }
 interface PriceVariant { label: string; value: string; }
 
 // ── Constants ────────────────────────────────────────────────
@@ -36,7 +36,15 @@ function parseVariants(str: string | null): PriceVariant[] {
 }
 function buildVariantsJSON(vs: PriceVariant[]) {
     const c = vs.filter(v => v.label.trim() && v.value.trim());
-    return c.length ? JSON.stringify(c.map(v => ({ label: v.label.trim(), value: parseFloat(v.value) }))) : '';
+    return c.length ? JSON.stringify(c.map(v => ({ label: v.label.trim(), value: v.value.trim() }))) : '';
+}
+function parseImages(str: any): string[] {
+    if (!str) return [];
+    if (typeof str === 'string') {
+        try { const a = JSON.parse(str); if (Array.isArray(a)) return a; } catch { }
+    }
+    if (Array.isArray(str)) return str;
+    return [];
 }
 
 // ════════════════════════════════════════════════════════════
@@ -62,6 +70,11 @@ export default function AdminPage() {
         imagen_url: '/img/principal/banner.svg',
         badge1_icon: '🚀', badge1_text: 'Rápido',
         badge2_icon: '⚡', badge2_text: 'Entrega Inmediata',
+        mant_titulo: 'Mantenimiento Profesional de PC',
+        mant_subtitulo: 'Optimiza tu equipo con limpieza profunda, cambio de pasta térmica, gestión de cables y actualización de controladores.',
+        mant_imagen_url: '/pc_maintenance_service_banner_1772868547157.png',
+        mant_btn_texto: 'AGENDAR CITA',
+        mant_msg_whatsapp: 'Hola! Me interesa un mantenimiento para mi PC.',
     });
     const [bannerSaving, setBannerSaving] = useState(false);
     const [bannerLoaded, setBannerLoaded] = useState(false);
@@ -70,13 +83,21 @@ export default function AdminPage() {
     const [modalOpen, setModalOpen] = useState(false);
     const [editing, setEditing] = useState<any>(null);
     const [form, setForm] = useState<Record<string, string>>({});
+    const [initialForm, setInitialForm] = useState<Record<string, string>>({});
     const [usaVariantes, setUsaVariantes] = useState(false);
     const [variants, setVariants] = useState<PriceVariant[]>([{ label: '', value: '' }]);
+    const [initialVariants, setInitialVariants] = useState<PriceVariant[]>([{ label: '', value: '' }]);
+    const [addImgs, setAddImgs] = useState<string[]>([]);
+    const [initialAddImgs, setInitialAddImgs] = useState<string[]>([]);
     const [saving, setSaving] = useState(false);
     const [delConfirm, setDelConfirm] = useState<number | null>(null);
     const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
     const [search, setSearch] = useState('');
     const [loading, setLoading] = useState(false);
+    
+    // quick view state
+    const [quickView, setQuickView] = useState<any>(null);
+    const [quickViewImg, setQuickViewImg] = useState<string>('');
 
     const showToast = (msg: string, ok = true) => { setToast({ msg, ok }); setTimeout(() => setToast(null), 3500); };
     const f = (key: string, val: string) => setForm(p => ({ ...p, [key]: val }));
@@ -160,8 +181,12 @@ export default function AdminPage() {
                 ? { nombre: '', descripcion: '', precio: '', imagen_url: '', categoria: 'Juego', posicion: '' }
                 : { nombre: '', descripcion: '', precio: '', imagen_url: '', categoria: 'Componentes', tipo: '' };
         setForm(defaults);
+        setInitialForm(defaults);
         setUsaVariantes(false);
         setVariants([{ label: '', value: '' }]);
+        setInitialVariants([{ label: '', value: '' }]);
+        setAddImgs([]);
+        setInitialAddImgs([]);
         setModalOpen(true);
     };
 
@@ -170,18 +195,38 @@ export default function AdminPage() {
         const vars = parseVariants(p.variantes_precio);
         setUsaVariantes(vars.length > 0);
         setVariants(vars.length > 0 ? vars : [{ label: '', value: '' }]);
-        const base: Record<string, string> = {
+        const base: Record<string, string | boolean> = {
             nombre: p.nombre ?? '', descripcion: p.descripcion ?? '',
             precio: p.precio ?? '', imagen_url: p.imagen_url ?? '',
+            destacado: p.destacado ?? false, agotado: p.agotado ?? false,
         };
         if (section === 'streaming') { base.plataforma = p.plataforma ?? 'Netflix'; base.duracion = p.duracion ?? '1 mes'; }
         if (section === 'inicio') { base.categoria = p.categoria ?? 'Juego'; base.posicion = String(p.posicion ?? ''); }
         if (section === 'mantenimiento') { base.categoria = p.categoria ?? 'Componentes'; base.tipo = p.tipo ?? ''; }
-        setForm(base);
+        
+        const ia = parseImages(p.imagenes_adicionales);
+        setAddImgs(ia);
+        setInitialAddImgs(ia);
+
+        setForm(base as any);
+        setInitialForm(base as any);
+        setInitialVariants(vars.length > 0 ? vars : [{ label: '', value: '' }]);
         setModalOpen(true);
     };
 
-    const closeModal = () => { setModalOpen(false); setEditing(null); };
+    const closeModal = (checkChanges = false) => {
+        if (checkChanges) {
+            const hasFormChanges = JSON.stringify(form) !== JSON.stringify(initialForm);
+            const hasVariantChanges = usaVariantes && JSON.stringify(variants) !== JSON.stringify(initialVariants);
+            const hasImgChanges = JSON.stringify(addImgs) !== JSON.stringify(initialAddImgs);
+            if (hasFormChanges || hasVariantChanges || hasImgChanges) {
+                const confirm = window.confirm('¿Estás seguro de que deseas salir? Se perderán los datos no guardados');
+                if (!confirm) return;
+            }
+        }
+        setModalOpen(false);
+        setEditing(null);
+    };
 
     // ── Save ──
     const save = async () => {
@@ -189,7 +234,15 @@ export default function AdminPage() {
         setSaving(true);
         try {
             const varJson = usaVariantes ? buildVariantsJSON(variants) : '';
-            const body = { ...form, variantes_precio: varJson || null, precio: !usaVariantes && form.precio ? form.precio : null };
+            const validImgs = addImgs.filter(u => u.trim());
+            const body: any = { 
+                ...form, 
+                variantes_precio: varJson || null, 
+                precio: !usaVariantes && form.precio ? form.precio : null,
+                imagenes_adicionales: validImgs
+            };
+            if (body.posicion === '') delete body.posicion;
+
             const meta = SECTION_META[section as keyof typeof SECTION_META];
             const url = editing ? `${meta.api}/${editing.id}` : meta.api;
             const res = await fetch(url, { method: editing ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -509,6 +562,41 @@ export default function AdminPage() {
                                         placeholder="https://... o /img/principal/banner.svg" style={S.input} />
                                 </div>
 
+                                {/* ===== MANTENIMIENTO BANNER ===== */}
+                                <div style={{ ...S.card, padding: 24, gridColumn: '1 / -1', border: '1px solid rgba(139,92,246,0.3)', background: 'rgba(139,92,246,0.02)' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+                                        <div style={{ fontSize: 24 }}>🔧</div>
+                                        <h2 style={{ fontSize: 18, fontWeight: 800, color: '#fff', margin: 0 }}>Banner de Mantenimiento</h2>
+                                    </div>
+                                    
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
+                                        <Fld label="Título (Mantenimiento)">
+                                            <input value={banner.mant_titulo} onChange={e => bSet('mant_titulo', e.target.value)}
+                                                placeholder="Ej: Mantenimiento Profesional de PC" style={S.input} />
+                                        </Fld>
+                                        <Fld label="Texto del botón">
+                                            <input value={banner.mant_btn_texto} onChange={e => bSet('mant_btn_texto', e.target.value)}
+                                                placeholder="Ej: AGENDAR CITA" style={S.input} />
+                                        </Fld>
+                                        <Fld label="Mensaje de WhatsApp">
+                                            <input value={banner.mant_msg_whatsapp} onChange={e => bSet('mant_msg_whatsapp', e.target.value)}
+                                                placeholder="Ej: Hola! Quisiera agendar..." style={S.input} />
+                                        </Fld>
+                                        <div style={{ gridColumn: '1 / -1' }}>
+                                            <Fld label="Subtítulo / Descripción">
+                                                <textarea value={banner.mant_subtitulo} onChange={e => bSet('mant_subtitulo', e.target.value)}
+                                                    rows={3} placeholder="Describe el servicio..." style={{ ...S.input, resize: 'vertical', fontFamily: 'inherit' }} />
+                                            </Fld>
+                                        </div>
+                                        <div style={{ gridColumn: '1 / -1' }}>
+                                            <Fld label="URL de imagen del Banner Mantenimiento">
+                                                <input value={banner.mant_imagen_url} onChange={e => bSet('mant_imagen_url', e.target.value)}
+                                                    placeholder="https://... o /img/maintenance.jpg" style={S.input} />
+                                            </Fld>
+                                        </div>
+                                    </div>
+                                </div>
+
                             </div>
 
                             {/* Save bottom */}
@@ -574,7 +662,7 @@ export default function AdminPage() {
                                             const isFirst = idx === 0;
                                             const isLast = idx === filtered.length - 1;
                                             return (
-                                                <div key={p.id} style={{ ...S.card, padding: '18px 24px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                                                <div key={p.id} style={{ ...S.card, padding: '18px 24px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', opacity: p.agotado ? 0.6 : 1, filter: p.agotado ? 'grayscale(0.8)' : 'none' }}>
 
                                                     {/* ── Posición controles ── */}
                                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flexShrink: 0 }}>
@@ -607,13 +695,14 @@ export default function AdminPage() {
                                                     <div style={{ flex: 1, minWidth: 0 }}>
                                                         <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 6 }}>
                                                             <span style={{ color: '#fff', fontWeight: 700, fontSize: 16 }}>{p.nombre}</span>
+                                                            {p.destacado && <span style={{ fontSize: 11, padding: '2px 9px', borderRadius: 999, background: '#fbbf2420', color: '#fbbf24', border: '1px solid #fbbf2430', fontWeight: 700 }}>🌟 DESTACADO</span>}
+                                                            {p.agotado && <span style={{ fontSize: 11, padding: '2px 9px', borderRadius: 999, background: '#ef444420', color: '#ef4444', border: '1px solid #ef444430', fontWeight: 700 }}>⛔ AGOTADO</span>}
                                                             {badge && <span style={{ fontSize: 11, padding: '2px 9px', borderRadius: 999, background: `${badgeColor}18`, color: badgeColor, border: `1px solid ${badgeColor}30`, fontWeight: 600 }}>{badge}</span>}
                                                             {p.duracion && <span style={{ fontSize: 11, color: '#6b7280' }}>· {p.duracion}</span>}
-                                                            {idx === 0 && <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 999, background: '#fbbf2420', color: '#fbbf24', border: '1px solid #fbbf2430', fontWeight: 700 }}>⭐ PRIMERO</span>}
                                                         </div>
                                                         <div style={{ fontSize: 14, color: '#6b7280' }}>
                                                             {vars.length > 0
-                                                                ? `${vars.length} opciones · desde Bs ${Math.min(...vars.map(v => parseFloat(v.value))).toFixed(2)}`
+                                                                ? `${vars.length} opciones`
                                                                 : p.precio ? `Bs ${parseFloat(p.precio).toFixed(2)}` : 'Sin precio definido'}
                                                             {p.descripcion && <span style={{ marginLeft: 10 }}>· {p.descripcion.slice(0, 55)}{p.descripcion.length > 55 ? '…' : ''}</span>}
                                                         </div>
@@ -628,6 +717,7 @@ export default function AdminPage() {
                                                         </div>
                                                     ) : (
                                                         <div style={{ display: 'flex', gap: 8 }}>
+                                                            <button onClick={() => { setQuickView(p); setQuickViewImg(p.imagen_url || '/img/placeholder.jpg'); }} style={S.btn('#1f2937', 'sm')}>👁️ Vista rápida</button>
                                                             <button onClick={() => openEdit(p)} style={S.btn('#3b82f6', 'sm')}>✏️ Editar</button>
                                                             <button onClick={() => setDelConfirm(p.id)} style={S.btn('#374151', 'sm')}>🗑️</button>
                                                         </div>
@@ -646,14 +736,14 @@ export default function AdminPage() {
             {/* ════════════ MODAL ════════════ */}
             {modalOpen && (
                 <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 9990, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
-                    onClick={e => { if (e.target === e.currentTarget) closeModal(); }}>
+                    onClick={e => { if (e.target === e.currentTarget) closeModal(true); }}>
                     <div style={{ ...S.card, width: '100%', maxWidth: 540, maxHeight: '90vh', overflowY: 'auto', padding: 28 }}>
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
                             <h2 style={{ color: '#fff', fontWeight: 800, fontSize: 17, margin: 0 }}>
                                 {editing ? '✏️ Editar producto' : '➕ Nuevo producto'}
                             </h2>
-                            <button onClick={closeModal} style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: 22, cursor: 'pointer', lineHeight: 1 }}>×</button>
+                            <button onClick={() => closeModal(true)} style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: 22, cursor: 'pointer', lineHeight: 1 }}>×</button>
                         </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -722,8 +812,8 @@ export default function AdminPage() {
                                                 <input value={v.label} onChange={e => setVariants(vs => vs.map((x, j) => j === i ? { ...x, label: e.target.value } : x))}
                                                     placeholder={`Opción ${i + 1} — ej: 8GB, 1 mes, Pro...`}
                                                     style={{ ...S.input, flex: 2 }} />
-                                                <input type="number" value={v.value} onChange={e => setVariants(vs => vs.map((x, j) => j === i ? { ...x, value: e.target.value } : x))}
-                                                    placeholder="Precio Bs" style={{ ...S.input, flex: 1 }} />
+                                                <input value={v.value} onChange={e => setVariants(vs => vs.map((x, j) => j === i ? { ...x, value: e.target.value } : x))}
+                                                    placeholder="Precio (Ej: 25 o texto)" style={{ ...S.input, flex: 1 }} />
                                                 {variants.length > 1 && <button onClick={() => setVariants(vs => vs.filter((_, j) => j !== i))} style={{ color: '#f87171', background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>×</button>}
                                             </div>
                                         ))}
@@ -734,18 +824,110 @@ export default function AdminPage() {
                             )}
 
                             {/* Imagen */}
-                            <Fld label="URL de la imagen (opcional)">
+                            <Fld label="URL de la imagen PRINCIPAL (opcional)">
                                 <input value={form.imagen_url ?? ''} onChange={e => f('imagen_url', e.target.value)}
                                     placeholder="https://... (deja vacío para imagen por defecto)" style={S.input} />
+                            </Fld>
+
+                            <Fld label="Imágenes adicionales (para vista rápida)">
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                    {addImgs.map((url, i) => (
+                                        <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                            <input value={url} onChange={e => setAddImgs(l => l.map((vl, j) => j === i ? e.target.value : vl))}
+                                                placeholder="https://... URL de imagen"
+                                                style={{ ...S.input, flex: 1 }} />
+                                            <button onClick={() => setAddImgs(l => l.filter((_, j) => j !== i))} style={{ color: '#f87171', background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>×</button>
+                                        </div>
+                                    ))}
+                                    <button onClick={() => setAddImgs(l => [...l, ''])}
+                                        style={{ ...S.btn('#1f2937', 'sm'), alignSelf: 'flex-start' }}>+ Añadir otra foto</button>
+                                </div>
+                            </Fld>
+
+                            <Fld label="Estado del producto">
+                                <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                                    <label style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '12px 16px', background: 'rgba(255,255,255,0.03)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.08)' }}>
+                                        <input type="checkbox" checked={!!form.destacado} onChange={e => setForm(p => ({ ...p, destacado: e.target.checked } as any))} 
+                                            style={{ width: 18, height: 18, accentColor: '#fbbf24' }} />
+                                        <span style={{ color: '#fff', fontSize: 14, fontWeight: 600 }}>🌟 Mostrar primero (Destacado)</span>
+                                    </label>
+                                    <label style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '12px 16px', background: 'rgba(239,68,68,0.05)', borderRadius: 12, border: '1px solid rgba(239,68,68,0.2)' }}>
+                                        <input type="checkbox" checked={!!form.agotado} onChange={e => setForm(p => ({ ...p, agotado: e.target.checked } as any))} 
+                                            style={{ width: 18, height: 18, accentColor: '#ef4444' }} />
+                                        <span style={{ color: '#ef4444', fontSize: 14, fontWeight: 600 }}>⛔ Marcar como Agotado</span>
+                                    </label>
+                                </div>
                             </Fld>
                         </div>
 
                         {/* Footer modal */}
                         <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
-                            <button onClick={closeModal} style={{ ...S.btn('#374151'), flex: 1 }}>Cancelar</button>
+                            <button onClick={() => closeModal(true)} style={{ ...S.btn('#374151'), flex: 1 }}>Cancelar</button>
                             <button onClick={save} disabled={saving} style={{ ...S.btn('#8b5cf6'), flex: 2, opacity: saving ? 0.7 : 1 }}>
                                 {saving ? '⏳ Guardando...' : editing ? '✅ Guardar cambios' : '✅ Crear producto'}
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ════════════ MODAL VISTA RÁPIDA ════════════ */}
+            {quickView && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 9995, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+                    onClick={e => { if (e.target === e.currentTarget) setQuickView(null); }}>
+                    <div style={{ ...S.card, width: '100%', maxWidth: 700, maxHeight: '90vh', overflowY: 'auto' }}>
+                        
+                        <div style={{ position: 'relative' }}>
+                            <button onClick={() => setQuickView(null)} style={{ position: 'absolute', top: 16, right: 16, width: 32, height: 32, borderRadius: '50%', background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', fontSize: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10 }}>×</button>
+                            
+                            <div style={{ width: '100%', height: 300, background: '#0a0a0f', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <img src={quickViewImg} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} alt="Preview" />
+                            </div>
+
+                            {/* Miniaturas */}
+                            <div style={{ display: 'flex', gap: 8, padding: '16px 24px', overflowX: 'auto', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                <button onClick={() => setQuickViewImg(quickView.imagen_url || '/img/placeholder.jpg')} 
+                                    style={{ width: 60, height: 60, borderRadius: 8, padding: 0, border: `2px solid ${quickViewImg === (quickView.imagen_url || '/img/placeholder.jpg') ? '#8b5cf6' : 'transparent'}`, overflow: 'hidden', cursor: 'pointer', flexShrink: 0, background: '#0a0a0f' }}>
+                                    <img src={quickView.imagen_url || '/img/placeholder.jpg'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                </button>
+                                {parseImages(quickView.imagenes_adicionales).map((imgUrl, i) => (
+                                    <button key={i} onClick={() => setQuickViewImg(imgUrl)} 
+                                        style={{ width: 60, height: 60, borderRadius: 8, padding: 0, border: `2px solid ${quickViewImg === imgUrl ? '#8b5cf6' : 'transparent'}`, overflow: 'hidden', cursor: 'pointer', flexShrink: 0, background: '#0a0a0f' }}>
+                                        <img src={imgUrl} onError={e => (e.currentTarget.style.display = 'none')} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div style={{ padding: 24 }}>
+                            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 12 }}>
+                                {quickView.destacado && <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 999, background: '#fbbf2420', color: '#fbbf24', border: '1px solid #fbbf2430', fontWeight: 700 }}>DESTACADO</span>}
+                                {quickView.categoria && <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 999, background: 'rgba(255,255,255,0.1)', color: '#fff', fontWeight: 600 }}>{quickView.categoria}</span>}
+                                {quickView.tipo && <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 999, background: 'rgba(255,255,255,0.1)', color: '#fff', fontWeight: 600 }}>{quickView.tipo}</span>}
+                                {quickView.plataforma && <span style={{ fontSize: 11, padding: '4px 10px', borderRadius: 999, background: '#e5091420', color: '#e50914', border: '1px solid #e5091430', fontWeight: 700 }}>{quickView.plataforma}</span>}
+                            </div>
+                            
+                            <h2 style={{ color: '#fff', fontSize: 24, fontWeight: 800, margin: '0 0 8px' }}>{quickView.nombre}</h2>
+                            <p style={{ color: '#9ca3af', fontSize: 15, lineHeight: 1.6, margin: '0 0 20px' }}>{quickView.descripcion || 'Sin descripción'}</p>
+
+                            <div style={{ padding: 16, background: 'rgba(255,255,255,0.03)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.05)' }}>
+                                <div style={{ color: '#a78bfa', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>Precio / Variantes</div>
+                                {parseVariants(quickView.variantes_precio).length > 0 ? (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                        {parseVariants(quickView.variantes_precio).map((v, i) => (
+                                            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: 8, background: 'rgba(0,0,0,0.2)', borderRadius: 8 }}>
+                                                <span style={{ color: '#fff' }}>{v.label}</span>
+                                                <span style={{ color: '#10b981', fontWeight: 700 }}>{v.value}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div style={{ fontSize: 20, color: '#10b981', fontWeight: 800 }}>
+                                        {quickView.precio ? `Bs ${parseFloat(quickView.precio).toFixed(2)}` : 'Consulte precio'}
+                                    </div>
+                                )}
+                            </div>
+
                         </div>
                     </div>
                 </div>

@@ -11,7 +11,7 @@ export async function GET() {
         const sql = neon(process.env.DATABASE_URL);
         const data = await sql`
             SELECT * FROM cuentas_streaming
-            ORDER BY posicion ASC NULLS LAST, id ASC
+            ORDER BY destacado DESC NULLS LAST, posicion ASC NULLS LAST, id ASC
         `;
         return NextResponse.json(data);
     } catch (error: any) {

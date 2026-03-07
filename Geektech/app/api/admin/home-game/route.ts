@@ -6,23 +6,33 @@ const getSQL = () => neon(process.env.DATABASE_URL!);
 export async function GET() {
     try {
         const sql = getSQL();
-        const data = await sql`SELECT * FROM home_game ORDER BY posicion ASC NULLS LAST, id ASC`;
+        const data = await sql`
+            SELECT * FROM home_game
+            ORDER BY destacado DESC NULLS LAST, posicion ASC NULLS LAST, id ASC
+        `;
         return NextResponse.json(data);
     } catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }); }
 }
 
 export async function POST(req: Request) {
     try {
-        const { nombre, descripcion, precio, imagen_url, categoria, variantes_precio, posicion } = await req.json();
-        if (!nombre?.trim()) return NextResponse.json({ error: 'El nombre es obligatorio' }, { status: 400 });
+        const { nombre, descripcion, precio, imagen_url, categoria, variantes_precio, posicion, destacado, agotado, imagenes_adicionales } = await req.json();
         const sql = getSQL();
+
         const maxPos = await sql`SELECT COALESCE(MAX(posicion), 0) + 1 as next FROM home_game`;
-        const pos = posicion !== undefined ? parseInt(posicion) : maxPos[0].next;
-        const result = await sql`
-            INSERT INTO home_game (nombre, descripcion, precio, imagen_url, categoria, variantes_precio, posicion)
-            VALUES (${nombre.trim()}, ${descripcion || null}, ${precio ? parseFloat(precio) : null},
-                    ${imagen_url || '/img/placeholder.jpg'}, ${categoria || 'Juego'}, ${variantes_precio || null}, ${pos})
-            RETURNING id`;
-        return NextResponse.json({ success: true, id: result[0].id }, { status: 201 });
+        const parsedPos = parseInt(posicion);
+        const pos = !isNaN(parsedPos) ? parsedPos : maxPos[0].next;
+
+        const parsedPrecio = parseFloat(precio);
+        const validPrecio = !isNaN(parsedPrecio) ? parsedPrecio : null;
+
+        const imgs = Array.isArray(imagenes_adicionales) ? JSON.stringify(imagenes_adicionales) : '[]';
+
+        const result = await sql`INSERT INTO home_game 
+            (nombre, descripcion, precio, imagen_url, categoria, variantes_precio, posicion, destacado, agotado, imagenes_adicionales)
+            VALUES (${nombre}, ${descripcion || null}, ${validPrecio},
+            ${imagen_url || '/img/placeholder.jpg'}, ${categoria || null},
+            ${variantes_precio || null}, ${pos}, ${destacado ? true : false}, ${agotado ? true : false}, ${imgs}) RETURNING id`;
+        return NextResponse.json({ success: true, id: result[0].id });
     } catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }); }
 }

@@ -11,29 +11,30 @@ interface ProductModalProps {
     onClose: () => void;
 }
 
-function extractPricesFromRawPrice(priceData: string | number): { label: string; value: number }[] {
+function extractPricesFromRawPrice(priceData: string | number): { label: string; value: number | string }[] {
     if (typeof priceData === 'number') return [];
     if (!priceData) return [];
 
     const priceString = String(priceData);
-    if (!priceString.includes(',') && !priceString.includes(':') && !isNaN(parseFloat(priceString))) {
+    // If it doesn't look like a list of variants, don't try to parse it
+    if (!priceString.includes(':') && !priceString.includes(',')) {
         return [];
     }
 
     const parts = priceString.split(',').map(p => p.trim()).filter(p => p !== '');
-    const extracted: { label: string; value: number }[] = [];
+    const extracted: { label: string; value: number | string }[] = [];
 
     for (const part of parts) {
         if (part.includes(':')) {
             const [label, priceStr] = part.split(':').map(s => s.trim());
-            const price = parseFloat(priceStr);
-            if (!isNaN(price) && isFinite(price)) {
-                extracted.push({ label, value: price });
-            }
+            const priceNum = parseFloat(priceStr);
+            extracted.push({ label, value: !isNaN(priceNum) ? priceNum : priceStr });
         } else {
-            const price = parseFloat(part);
-            if (!isNaN(price) && isFinite(price)) {
-                extracted.push({ label: `${price} Bs`, value: price });
+            const priceNum = parseFloat(part);
+            if (!isNaN(priceNum)) {
+                extracted.push({ label: `${priceNum} Bs`, value: priceNum });
+            } else if (part.length > 0) {
+                extracted.push({ label: part, value: part });
             }
         }
     }
@@ -42,15 +43,25 @@ function extractPricesFromRawPrice(priceData: string | number): { label: string;
 
 const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onClose }) => {
     const { addToCart } = useCart();
-    const [selectedOption, setSelectedOption] = useState<{ label: string; value: number } | null>(null);
+    const [selectedOption, setSelectedOption] = useState<{ label: string; value: number | string } | null>(null);
+    const [currentImg, setCurrentImg] = useState(product.img);
+
+    React.useEffect(() => {
+        if (isOpen) {
+            setCurrentImg(product.img);
+            setSelectedOption(null);
+        }
+    }, [isOpen, product.img]);
+
+    const allImages = [product.img, ...(product.imagenes_adicionales || [])].filter(Boolean);
 
     const parsedOptions = extractPricesFromRawPrice(product.price);
     const options = (product.prices && product.prices.length > 0) ? product.prices : parsedOptions;
     const showOptions = options.length > 0;
 
-    const basePrice = typeof product.price === 'number'
-        ? product.price
-        : (showOptions ? 0 : parseFloat(String(product.price)));
+    const basePrice = (typeof product.price === 'number' || !isNaN(parseFloat(String(product.price))))
+        ? parseFloat(String(product.price))
+        : (showOptions ? 0 : String(product.price));
 
     const handleAddToCart = () => {
         let finalPrice = basePrice;
@@ -92,20 +103,45 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onClose })
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.9, opacity: 0, y: 20 }}
                         >
-                            <div className="relative p-6 border-b border-white/10 bg-[#1a1a1a] flex gap-4 items-start">
-                                <div className="w-24 h-24 shrink-0 rounded-lg overflow-hidden border border-white/10 shadow-lg bg-black/20">
-                                    <img src={product.img} alt={product.title} className="w-full h-full object-cover" />
-                                </div>
-                                <div className="flex-1 min-w-0 pt-1">
-                                    <h3 className="text-xl font-bold text-white mb-2 leading-tight">{product.title}</h3>
-                                    <p className="text-gray-400 text-sm leading-relaxed line-clamp-3">
-                                        {product.subtitle || 'Excelente elección para tu colección.'}
-                                    </p>
-                                </div>
+                            <div className="relative border-b border-white/10 bg-[#1a1a1a]">
                                 <button
                                     onClick={onClose}
-                                    className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
-                                >✕</button>
+                                    className="absolute top-4 right-4 p-2 text-white hover:bg-black/40 bg-black/20 backdrop-blur-md rounded-full z-10 transition-colors"
+                                >
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+                                </button>
+                                
+                                <div className="w-full h-64 sm:h-72 bg-black/40 overflow-hidden relative flex items-center justify-center">
+                                    <img src={currentImg} alt={product.title} className="w-full h-full object-contain p-4" />
+                                </div>
+                                
+                                {allImages.length > 1 && (
+                                    <div className="flex gap-3 px-6 py-4 overflow-x-auto bg-black/20 items-center justify-start border-b border-white/5" style={{ scrollbarWidth: 'none' }}>
+                                        {allImages.map((img, idx) => (
+                                            <button 
+                                                key={idx} 
+                                                onClick={() => setCurrentImg(img)} 
+                                                className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${currentImg === img ? 'border-purple-500 scale-105 shadow-md shadow-purple-500/20' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                                            >
+                                                <img src={img} alt={`${product.title} thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                                
+                                <div className="p-6 bg-[#1a1a1a] border-b border-white/5">
+                                    <div className="flex gap-3 mb-2 flex-wrap">
+                                        <span className="text-xs font-bold px-2 py-1 bg-purple-500/20 text-purple-400 rounded-md uppercase tracking-wider">
+                                            {product.genre || product.platform || 'Producto'}
+                                        </span>
+                                    </div>
+                                    <h3 className="text-3xl font-black text-white mb-3 leading-tight tracking-tight bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+                                        {product.title}
+                                    </h3>
+                                    <p className="text-white/90 text-lg sm:text-xl leading-relaxed font-medium bg-gradient-to-br from-white/10 to-transparent p-5 rounded-2xl border border-white/10 shadow-inner">
+                                        {product.subtitle || 'Este producto premium ha sido seleccionado cuidadosamente para garantizar la mejor calidad y rendimiento en tus necesidades tecnológicas.'}
+                                    </p>
+                                </div>
                             </div>
 
                             <div className="p-6 overflow-y-auto bg-[#121212]">
@@ -125,7 +161,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onClose })
                                                     {option.label}
                                                 </span>
                                                 <span className={`text-xs ${selectedOption === option ? 'text-purple-300' : 'text-gray-500'}`}>
-                                                    Bs {option.value.toFixed(2)}
+                                                    {typeof option.value === 'number' ? `Bs ${option.value.toFixed(2)}` : option.value}
                                                 </span>
                                             </button>
                                         ))}
@@ -134,7 +170,7 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onClose })
                                     <div className="p-4 bg-[#1e1e24] border border-white/5 rounded-xl flex justify-between items-center">
                                         <span className="text-gray-300 font-medium">Precio Estándar</span>
                                         <span className="text-xl font-bold text-purple-400">
-                                            Bs {typeof basePrice === 'number' && !isNaN(basePrice) ? basePrice.toFixed(2) : 'Consultar'}
+                                            {typeof basePrice === 'number' && !isNaN(basePrice) ? `Bs ${basePrice.toFixed(2)}` : basePrice}
                                         </span>
                                     </div>
                                 )}
@@ -143,19 +179,23 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onClose })
                             <div className="p-6 border-t border-white/10 bg-[#1a1a1a] shrink-0">
                                 <button
                                     onClick={handleAddToCart}
-                                    disabled={showOptions && !selectedOption}
                                     className={`w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 flex justify-center items-center gap-2
-                                        ${(!showOptions || selectedOption)
-                                            ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-900/40 hover:scale-[1.02] hover:shadow-purple-900/60'
-                                            : 'bg-white/5 text-gray-500 cursor-not-allowed border border-white/5'
+                                        ${product.agotado
+                                            ? 'bg-red-900/40 text-red-300 border border-red-500/30 cursor-not-allowed grayscale-[0.5]'
+                                            : (!showOptions || selectedOption)
+                                                ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-900/40 hover:scale-[1.02] hover:shadow-purple-900/60'
+                                                : 'bg-white/5 text-gray-500 cursor-not-allowed border border-white/5'
                                         }`}
                                 >
-                                    {!showOptions
-                                        ? `Añadir al Carrito - Bs ${typeof basePrice === 'number' && !isNaN(basePrice) ? basePrice.toFixed(2) : '?'}`
-                                        : selectedOption
-                                            ? `Añadir al Carrito - Bs ${selectedOption.value.toFixed(2)}`
-                                            : 'Selecciona un Paquete'
-                                    }
+                                    {product.agotado ? (
+                                        <>⛔ PRODUCTO AGOTADO</>
+                                    ) : !showOptions ? (
+                                        `Añadir al Carrito - ${typeof basePrice === 'number' && !isNaN(basePrice) ? `Bs ${basePrice.toFixed(2)}` : basePrice}`
+                                    ) : selectedOption ? (
+                                        `Añadir al Carrito - ${typeof selectedOption.value === 'number' ? `Bs ${selectedOption.value.toFixed(2)}` : selectedOption.value}`
+                                    ) : (
+                                        'Selecciona un Paquete'
+                                    )}
                                 </button>
                             </div>
                         </motion.div>

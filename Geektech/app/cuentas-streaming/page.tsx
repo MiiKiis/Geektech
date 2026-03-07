@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import ProductCard from '../components/ProductCard';
 
 interface SearchResult {
@@ -260,8 +261,43 @@ function StreamingContent() {
                 </div>
             </div>
 
-            {/* ===== PRODUCTOS ===== */}
-            <main className="w-full">
+            {/* ===== MAIN CONTENT WITH SIDEBAR ===== */}
+            <div style={{ display: 'flex', flexDirection: 'row', gap: '32px', alignItems: 'start' }} className="streaming-layout">
+                {/* Sidebar: Featured Streaming */}
+                <aside className="hidden lg:block w-[300px] sticky top-[100px] shrink-0">
+                    <div style={{ background: 'linear-gradient(180deg, #1e1e24 0%, #17171f 100%)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.08)', padding: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                            <span style={{ fontSize: '24px' }}>🔥</span>
+                            <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>Tendencias</h3>
+                        </div>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            {products.filter((p: any) => p.destacado).slice(0, 5).map((p: any) => (
+                                <div key={p.id} style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                                    <div style={{ width: '70px', height: '70px', borderRadius: '14px', overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)', background: '#0c0c12' }}>
+                                        <img src={p.imagen_url || '/img/placeholder.jpg'} alt={p.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    </div>
+                                    <div style={{ minWidth: 0 }}>
+                                        <div style={{ fontSize: '14px', fontWeight: 700, color: '#fff', marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nombre}</div>
+                                        <div style={{ fontSize: '13px', color: '#22c55e', fontWeight: 800 }}>Bs {parseFloat(p.precio || '0').toFixed(2)}</div>
+                                    </div>
+                                </div>
+                            ))}
+                            {products.filter((p: any) => p.destacado).length === 0 && (
+                                <p style={{ color: '#6b7280', fontSize: '13px', textAlign: 'center', padding: '20px 0' }}>Promociones exclusivas pronto.</p>
+                            )}
+                        </div>
+
+                        <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                            <Link href="/mantenimiento-componentes" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#22c55e', textDecoration: 'none', fontWeight: 700, fontSize: '14px' }}>
+                                <span>VER HARDWARE</span>
+                                <span>→</span>
+                            </Link>
+                        </div>
+                    </div>
+                </aside>
+
+                <main className="flex-1 w-full">
                 {loading ? (
                     <div className="flex justify-center py-20">
                         <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
@@ -276,7 +312,9 @@ function StreamingContent() {
                                 id: p.id, title: p.nombre,
                                 subtitle: `${p.plataforma} - ${p.duracion}`,
                                 img: p.imagen_url || '/img/placeholder.jpg',
-                                price: parseFloat(p.precio) || 0, platform: p.plataforma
+                                price: parseFloat(p.precio) || 0, platform: p.plataforma,
+                                imagenes_adicionales: p.imagenes_adicionales || [],
+                                agotado: !!p.agotado, destacado: !!p.destacado
                             }} viewMode={viewMode} />
                         ))}
                     </div>
@@ -291,7 +329,15 @@ function StreamingContent() {
                         </div>
                     </div>
                 )}
-            </main>
+                </main>
+            </div>
+            
+            <style jsx>{`
+                @media (max-width: 1024px) {
+                    .streaming-layout { flex-direction: column !important; }
+                    aside { display: none !important; }
+                }
+            `}</style>
         </div>
     );
 }

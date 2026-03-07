@@ -37,7 +37,8 @@ const ProductGrid: React.FC<ProductGridProps> = ({ category, viewMode = 'grid' }
                     img: item.imagen_url || item.imagen || '/img/placeholder.jpg',
                     prices: parsePrices(item.variantes_precio),
                     genre: item.categoria || '',
-                    platform: 'pc'
+                    platform: 'pc',
+                    imagenes_adicionales: item.imagenes_adicionales || [],
                 }));
 
                 setProducts(mapped);

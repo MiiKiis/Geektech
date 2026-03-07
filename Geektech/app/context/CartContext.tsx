@@ -6,7 +6,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 export type CartItem = {
     id: string | number;
     title: string;
-    price: number;
+    price: number | string;
     img: string;
     quantity: number; // Added quantity
     [key: string]: any;
@@ -92,7 +92,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setIsCartOpen(!isCartOpen);
     };
 
-    const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const total = cart.reduce((sum, item) => {
+        const p = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+        return sum + ((isNaN(p) ? 0 : p) * item.quantity);
+    }, 0);
 
     return (
         <CartContext.Provider value={{ cart, addToCart, removeFromCart, clearCart, toggleCart, isCartOpen, total }}>

@@ -39,7 +39,8 @@ export default function CategoryPage() {
                     img: item.imagen_url || item.imagen || '/img/placeholder.jpg',
                     prices: parsePrices(item.variantes_precio),
                     genre: item.categoria || item.tipo || '',
-                    platform: item.plataforma || 'pc'
+                    platform: item.plataforma || 'pc',
+                    imagenes_adicionales: item.imagenes_adicionales || [],
                 }));
 
                 setProducts(mapped);

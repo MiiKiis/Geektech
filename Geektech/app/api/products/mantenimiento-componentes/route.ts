@@ -10,9 +10,9 @@ export async function GET() {
         }
         const sql = neon(process.env.DATABASE_URL);
         const data = await sql`
-            SELECT id, nombre, descripcion, precio, imagen_url, categoria, tipo, variantes_precio, posicion
+            SELECT id, nombre, descripcion, precio, imagen_url, categoria, tipo, variantes_precio, posicion, destacado, agotado, imagenes_adicionales
             FROM componentes_pcs
-            ORDER BY posicion ASC NULLS LAST, id ASC
+            ORDER BY destacado DESC NULLS LAST, posicion ASC NULLS LAST, id ASC
         `;
         return NextResponse.json(data);
     } catch (error: any) {

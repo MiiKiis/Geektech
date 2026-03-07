@@ -16,7 +16,11 @@ export async function GET() {
 export async function PUT(req: Request) {
     try {
         const body = await req.json();
-        const { titulo, subtitulo, btn_texto, btn_link, imagen_url, badge1_icon, badge1_text, badge2_icon, badge2_text } = body;
+        const { 
+            titulo, subtitulo, btn_texto, btn_link, imagen_url, 
+            badge1_icon, badge1_text, badge2_icon, badge2_text,
+            mant_titulo, mant_subtitulo, mant_imagen_url, mant_btn_texto, mant_msg_whatsapp 
+        } = body;
         const sql = getSQL();
 
         // Siempre actualizar el registro id=1 (upsert)
@@ -33,13 +37,26 @@ export async function PUT(req: Request) {
                     badge1_text = ${badge1_text ?? 'Rápido'},
                     badge2_icon = ${badge2_icon ?? '⚡'},
                     badge2_text = ${badge2_text ?? 'Entrega Inmediata'},
+                    mant_titulo = ${mant_titulo ?? 'Mantenimiento Profesional de PC'},
+                    mant_subtitulo = ${mant_subtitulo ?? ''},
+                    mant_imagen_url = ${mant_imagen_url ?? ''},
+                    mant_btn_texto = ${mant_btn_texto ?? 'AGENDAR CITA'},
+                    mant_msg_whatsapp = ${mant_msg_whatsapp ?? 'Hola! Me interesa un mantenimiento para mi PC.'},
                     updated_at  = NOW()
                 WHERE id = ${existing[0].id}
             `;
         } else {
             await sql`
-                INSERT INTO banner_config (titulo, subtitulo, btn_texto, btn_link, imagen_url, badge1_icon, badge1_text, badge2_icon, badge2_text)
-                VALUES (${titulo}, ${subtitulo}, ${btn_texto}, ${btn_link}, ${imagen_url}, ${badge1_icon}, ${badge1_text}, ${badge2_icon}, ${badge2_text})
+                INSERT INTO banner_config (
+                    titulo, subtitulo, btn_texto, btn_link, imagen_url, 
+                    badge1_icon, badge1_text, badge2_icon, badge2_text,
+                    mant_titulo, mant_subtitulo, mant_imagen_url, mant_btn_texto, mant_msg_whatsapp
+                )
+                VALUES (
+                    ${titulo}, ${subtitulo}, ${btn_texto}, ${btn_link}, ${imagen_url}, 
+                    ${badge1_icon}, ${badge1_text}, ${badge2_icon}, ${badge2_text},
+                    ${mant_titulo}, ${mant_subtitulo}, ${mant_imagen_url}, ${mant_btn_texto}, ${mant_msg_whatsapp}
+                )
             `;
         }
         return NextResponse.json({ success: true });

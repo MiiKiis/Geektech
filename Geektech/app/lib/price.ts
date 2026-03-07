@@ -1,4 +1,4 @@
-export type PriceVariant = { label: string; value: number };
+export type PriceVariant = { label: string; value: string | number };
 
 /**
  * Parses price variants from either:
@@ -15,8 +15,11 @@ export function parsePrices(str: string | null | undefined): PriceVariant[] {
       const parsed = JSON.parse(trimmed);
       if (Array.isArray(parsed)) {
         return parsed
-          .filter((p: any) => p && typeof p.label === 'string' && typeof p.value === 'number')
-          .map((p: any) => ({ label: p.label, value: p.value }));
+          .filter((p: any) => p && typeof p.label === 'string')
+          .map((p: any) => ({ 
+            label: p.label, 
+            value: p.value // Allow both strings and numbers
+          }));
       }
     } catch {
       // Fall through to legacy parser
@@ -26,9 +29,9 @@ export function parsePrices(str: string | null | undefined): PriceVariant[] {
   // Legacy "Label:value,Label:value" format
   return trimmed.split(',').map(p => {
     const [label, val] = p.split(':');
-    const num = parseFloat((val || '').trim());
-    return { label: label?.trim(), value: isNaN(num) ? 0 : num };
-  }).filter(x => x.label && !isNaN(x.value));
+    const value = (val || '').trim();
+    return { label: label?.trim(), value };
+  }).filter(x => x.label);
 }
 
 /**
@@ -37,16 +40,27 @@ export function parsePrices(str: string | null | undefined): PriceVariant[] {
 export function mostrarPrecio(producto: any): string {
   // Has real price value
   if (producto.precio !== null && producto.precio !== undefined && producto.precio !== '') {
-    const num = Number(producto.precio);
+    const num = parseFloat(String(producto.precio));
     if (!isNaN(num) && num > 0) return `Bs ${num.toFixed(2)}`;
+    if (typeof producto.precio === 'string' && producto.precio.trim().length > 0) return producto.precio;
   }
 
-  // Has price variants — show "desde Bs X"
+  // Has price variants — show "desde Bs X" or first value
   if (producto.variantes_precio) {
     const variants = parsePrices(producto.variantes_precio);
     if (variants.length > 0) {
-      const min = Math.min(...variants.map(v => v.value));
-      return `Desde Bs ${min.toFixed(2)}`;
+      // Find minimum numeric price if possible
+      const numericPrices = variants
+        .map(v => typeof v.value === 'string' ? parseFloat(v.value) : v.value)
+        .filter(v => !isNaN(v) && v > 0);
+
+      if (numericPrices.length > 0) {
+        const min = Math.min(...numericPrices);
+        return `Desde Bs ${min.toFixed(2)}`;
+      }
+      
+      // If no numeric prices, show the first variant's value
+      return String(variants[0].value);
     }
   }
 

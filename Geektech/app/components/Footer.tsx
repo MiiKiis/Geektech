@@ -39,7 +39,7 @@ const SOCIAL = [
     },
     {
         label: 'WhatsApp',
-        href: 'https://wa.me/59168190472',
+        href: 'https://api.whatsapp.com/send?phone=59168190472',
         hoverBg: 'rgba(37,211,102,0.15)',
         hoverBorder: 'rgba(37,211,102,0.4)',
         icon: (

@@ -8,7 +8,7 @@ export async function GET() {
         const sql = neon(process.env.DATABASE_URL!);
         const products = await sql`
             SELECT * FROM home_game
-            ORDER BY posicion ASC NULLS LAST, id ASC
+            ORDER BY destacado DESC NULLS LAST, posicion ASC NULLS LAST, id ASC
         `;
         return NextResponse.json(products);
     } catch (error: any) {

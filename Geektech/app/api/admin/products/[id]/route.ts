@@ -7,17 +7,28 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     try {
         const { id } = await params;
         const body = await req.json();
-        const { nombre, descripcion, precio, imagen_url, categoria, tipo, variantes_precio, posicion } = body;
+        const { nombre, descripcion, precio, imagen_url, categoria, tipo, variantes_precio, posicion, destacado, agotado, imagenes_adicionales } = body;
         if (!nombre?.trim()) return NextResponse.json({ error: 'El nombre es obligatorio' }, { status: 400 });
         const sql = getSQL();
+        const parsedPos = parseInt(posicion);
+        const validPos = !isNaN(parsedPos) ? parsedPos : null;
+
+        const parsedPrecio = parseFloat(precio);
+        const validPrecio = !isNaN(parsedPrecio) ? parsedPrecio : null;
+
+        const imgs = Array.isArray(imagenes_adicionales) ? JSON.stringify(imagenes_adicionales) : '[]';
+
         await sql`
             UPDATE componentes_pcs SET
                 nombre=${nombre.trim()}, descripcion=${descripcion?.trim() || null},
-                precio=${precio ? parseFloat(precio) : null},
+                precio=${validPrecio},
                 imagen_url=${imagen_url?.trim() || '/img/placeholder.jpg'},
                 categoria=${categoria?.trim() || 'Componentes'}, tipo=${tipo?.trim() || null},
                 variantes_precio=${variantes_precio?.trim() || null},
-                posicion=${posicion !== undefined ? parseInt(posicion) : null}
+                posicion=${validPos},
+                destacado=${destacado ? true : false},
+                agotado=${agotado ? true : false},
+                imagenes_adicionales=${imgs}
             WHERE id=${parseInt(id)}`;
         return NextResponse.json({ success: true });
     } catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }); }
@@ -38,7 +49,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         const { id } = await params;
         const { posicion } = await req.json();
         const sql = getSQL();
-        await sql`UPDATE componentes_pcs SET posicion=${parseInt(posicion)} WHERE id=${parseInt(id)}`;
+        const parsedPos = parseInt(posicion);
+        if (!isNaN(parsedPos)) {
+            await sql`UPDATE componentes_pcs SET posicion=${parsedPos} WHERE id=${parseInt(id)}`;
+        }
         return NextResponse.json({ success: true });
     } catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }); }
 }

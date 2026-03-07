@@ -27,7 +27,7 @@ export default function CartSidebar() {
         });
         message += `\n*Total a Pagar: ${total} Bs*`;
 
-        const whatsappUrl = `https://wa.me/59168190472?text=${encodeURIComponent(message)}`;
+        const whatsappUrl = `https://api.whatsapp.com/send?phone=59168190472&text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, '_blank');
         toggleCart();
     };
@@ -122,7 +122,7 @@ export default function CartSidebar() {
                     </div>
                     {/* WhatsApp Checkout Link */}
                     <a
-                        href={cart.length > 0 ? `https://wa.me/59168190472?text=${encodeURIComponent(
+                        href={cart.length > 0 ? `https://api.whatsapp.com/send?phone=59168190472&text=${encodeURIComponent(
                             "Hola GeekTech, me interesa comprar:\n\n" +
                             cart.map(i => `• ${i.quantity}x ${i.title} - ${i.price * i.quantity} Bs`).join('\n') +
                             `\n\n*Total a Pagar: ${total} Bs*`

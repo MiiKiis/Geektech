@@ -50,6 +50,7 @@ function MantenimientoContent() {
     const [showDropdown, setShowDropdown] = useState(false);
     const searchContainerRef = useRef<HTMLDivElement>(null);
     const debounceRef = useRef<NodeJS.Timeout | null>(null);
+    const [banner, setBanner] = useState<any>(null);
 
     const searchParams = useSearchParams();
 
@@ -59,6 +60,18 @@ function MantenimientoContent() {
     }, [searchParams]);
 
     useEffect(() => {
+        const fetchBanner = async () => {
+            try {
+                const res = await fetch('/api/admin/banner');
+                if (res.ok) {
+                    const data = await res.json();
+                    setBanner(data);
+                }
+            } catch (error) {
+                console.error('Error fetching banner:', error);
+            }
+        };
+
         const fetchProducts = async () => {
             try {
                 const res = await fetch('/api/products/mantenimiento-componentes');
@@ -71,6 +84,7 @@ function MantenimientoContent() {
                 setLoading(false);
             }
         };
+        fetchBanner();
         fetchProducts();
     }, []);
 
@@ -409,17 +423,104 @@ function MantenimientoContent() {
                     </div>
                 </div>
 
-                {/* ===== GRID DE PRODUCTOS ===== */}
-                <main>
-                    {loading ? (
-                        <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
-                            <div style={{ width: '48px', height: '48px', border: '4px solid rgba(139,92,246,0.2)', borderTop: '4px solid #8b5cf6', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                {/* ===== MAIN LAYOUT WITH SIDEBAR ===== */}
+                <div className="flex flex-col lg:flex-row gap-8 items-start">
+                    {/* Sidebar: Featured Products */}
+                    <aside className="hidden lg:block w-[300px] sticky top-[100px] shrink-0">
+                        <div style={{ background: 'linear-gradient(180deg, #1e1e24 0%, #17171f 100%)', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.08)', padding: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                                <span style={{ fontSize: '24px' }}>🚀</span>
+                                <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>Destacados</h3>
+                            </div>
+                            
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                {products.filter((p: any) => p.destacado).slice(0, 5).map((p: any) => (
+                                    <Link key={p.id} href={`/product/${p.id}`} style={{ textDecoration: 'none' }} className="group">
+                                        <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                                            <div style={{ width: '70px', height: '70px', borderRadius: '14px', overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)', background: '#0c0c12' }}>
+                                                <img src={p.imagen_url || '/img/placeholder.jpg'} alt={p.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} className="transition-transform duration-300 group-hover:scale-110" />
+                                            </div>
+                                            <div style={{ minWidth: 0 }}>
+                                                <div style={{ fontSize: '15px', fontWeight: 800, color: '#c084fc', marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nombre}</div>
+                                                <div style={{ fontSize: '14px', color: '#a78bfa', fontWeight: 800 }}>Bs {parseFloat(p.precio || '0').toFixed(2)}</div>
+                                            </div>
+                                        </div>
+                                    </Link>
+                                ))}
+                                {products.filter((p: any) => p.destacado).length === 0 && (
+                                    <p style={{ color: '#6b7280', fontSize: '13px', textAlign: 'center', paddingTop: '20px', paddingBottom: '20px' }}>Más ofertas destacadas muy pronto.</p>
+                                )}
+                            </div>
+
+                            <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                                <Link href="/cuentas-streaming" className="flex items-center justify-between text-[#8b5cf6] hover:text-[#a78bfa] transition-colors font-bold text-sm tracking-wide">
+                                    <span>EXPLORAR STREAMING</span>
+                                    <span>→</span>
+                                </Link>
+                            </div>
                         </div>
-                    ) : filteredProducts.length > 0 ? (
-                        <div className={viewMode === 'grid'
-                            ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6 w-full'
-                            : 'flex flex-col gap-4 w-full max-w-5xl mx-auto'
-                        }>
+                    </aside>
+
+                    {/* Main content area */}
+                    <main className="flex-1 w-full">
+                        {/* Hero Mantenimiento Section */}
+                        <div style={{ 
+                            marginBottom: '40px', 
+                            borderRadius: '32px', 
+                            overflow: 'hidden', 
+                            position: 'relative',
+                            background: '#1a1a22',
+                            border: '1px solid rgba(255,255,255,0.05)',
+                            boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
+                            minHeight: '380px',
+                            display: 'flex',
+                            alignItems: 'center'
+                        }}>
+                            <div style={{ position: 'absolute', inset: 0, opacity: 0.4 }}>
+                                <img src={banner?.mant_imagen_url || "/pc_maintenance_service_banner_1772868547157.png"} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Mantenimiento Profesional" />
+                                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, #0c0c12 0%, #0c0c12 40%, transparent 100%)' }}></div>
+                            </div>
+                            
+                            <div style={{ position: 'relative', zIndex: 1, padding: '48px', maxWidth: '600px' }}>
+                                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(139,92,246,0.15)', padding: '8px 16px', borderRadius: '100px', marginBottom: '20px', border: '1px solid rgba(139,92,246,0.2)' }}>
+                                    <span style={{ fontSize: '14px' }}>🛡️</span>
+                                    <span style={{ fontSize: '13px', fontWeight: 800, color: '#a78bfa', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Servicio Tècnico Elite</span>
+                                </div>
+                                <h2 style={{ fontSize: '42px', fontWeight: 900, color: '#fff', marginBottom: '16px', lineHeight: 1.1 }}>
+                                    {banner?.mant_titulo?.includes('<br') 
+                                        ? <span dangerouslySetInnerHTML={{ __html: banner.mant_titulo }} />
+                                        : (banner?.mant_titulo || "Mantenimiento Profesional de PC")}
+                                </h2>
+                                <p style={{ color: '#9ca3af', fontSize: '16px', lineHeight: 1.6, marginBottom: '28px' }}>
+                                    {banner?.mant_subtitulo || "Optimiza tu equipo con limpieza profunda, cambio de pasta térmica, gestión de cables y actualización de controladores. Prolonga la vida de tu hardware con los expertos."}
+                                </p>
+                                <div style={{ display: 'flex', gap: '16px' }}>
+                                    <a href={`https://api.whatsapp.com/send?phone=+59168190472&text=${encodeURIComponent(banner?.mant_msg_whatsapp || 'Hola! Me interesa un mantenimiento para mi PC.')}`} target="_blank" style={{ 
+                                        background: '#8b5cf6', color: '#fff', padding: '14px 28px', borderRadius: '16px', fontSize: '15px', fontWeight: 800, textDecoration: 'none',
+                                        boxShadow: '0 10px 20px rgba(139,92,246,0.3)', transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: '10px'
+                                    }}>
+                                        <span>{banner?.mant_btn_texto || "AGENDAR CITA"}</span>
+                                        <span>📅</span>
+                                    </a>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                        <div style={{ display: 'flex' }}>
+                                            {[1,2,3,4,5].map(i => <span key={i} style={{ color: '#fbbf24', fontSize: '14px' }}>⭐</span>)}
+                                        </div>
+                                        <span style={{ color: '#fff', fontSize: '13px', fontWeight: 600 }}>+200 Servicios</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {loading ? (
+                            <div style={{ display: 'flex', justifyContent: 'center', padding: '80px 0' }}>
+                                <div style={{ width: '48px', height: '48px', border: '4px solid rgba(139,92,246,0.2)', borderTop: '4px solid #8b5cf6', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                            </div>
+                        ) : filteredProducts.length > 0 ? (
+                            <div className={viewMode === 'grid'
+                                ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full'
+                                : 'flex flex-col gap-4 w-full max-w-5xl mx-auto'
+                            }>
                             {filteredProducts.map(p => (
                                 <Link
                                     key={p.id}
@@ -429,7 +530,9 @@ function MantenimientoContent() {
                                     <ProductCard product={{
                                         id: p.id, title: p.nombre, subtitle: p.server_info,
                                         img: p.imagen_url || '/img/placeholder.jpg', price: mostrarPrecio(p),
-                                        prices: parsePrices(p.variantes_precio), genre: p.categoria
+                                        prices: parsePrices(p.variantes_precio), genre: p.categoria,
+                                        imagenes_adicionales: p.imagenes_adicionales || [],
+                                        agotado: !!p.agotado, destacado: !!p.destacado
                                     }} viewMode={viewMode} />
                                 </Link>
                             ))}
@@ -454,11 +557,16 @@ function MantenimientoContent() {
                             </div>
                         </div>
                     )}
-                </main>
+                    </main>
+                </div>
             </div>
 
             <style>{`
                 @keyframes spin { to { transform: rotate(360deg); } }
+                @media (max-width: 1024px) {
+                    .catalog-layout { grid-template-columns: 1fr !important; }
+                    .featured-sidebar { display: none !important; }
+                }
                 @media (max-width: 768px) {
                     .hero-grid { grid-template-columns: 1fr !important; }
                 }

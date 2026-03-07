@@ -156,7 +156,7 @@ export default function VariantSelector({
                 </div>
             ) : (
                 <a
-                    href={`https://wa.me/59168190472?text=${whatsappMessage()}`}
+                    href={`https://api.whatsapp.com/send?phone=59168190472&text=${whatsappMessage()}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
