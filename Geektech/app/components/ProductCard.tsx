@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import ProductModal from './ProductModal';
 
@@ -30,7 +31,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
     return (
         <>
             <motion.article
-                className={`relative overflow-hidden transition-colors duration-300 hover:border-purple-500/50 bg-[#1e1e24] border border-white/5 rounded-2xl
+                className={`relative overflow-hidden transition-colors duration-300 hover:border-purple-500/50 bg-[#1e1e24] border border-white/5 rounded-2xl will-change-transform transform-gpu
                     ${isList ? 'flex flex-row w-full h-48' : 'flex flex-col h-full w-full'}
                     ${product.agotado ? 'opacity-75 grayscale-[0.5]' : ''}`}
                 whileHover={product.agotado ? {} : { y: isList ? -2 : -10, scale: isList ? 1.005 : 1.02 }}
@@ -46,17 +47,24 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
                     </div>
                 )}
                 <div
-                    className={`relative overflow-hidden ${isList ? 'w-64 shrink-0' : 'w-full'}`}
+                    className={`relative overflow-hidden ${isList ? 'w-64 shrink-0' : 'w-full'} transform-gpu`}
                     style={!isList ? { aspectRatio: '3/4' } : { height: '100%' }}
                 >
-                    <motion.img
-                        src={product.img}
-                        alt={product.title}
-                        loading="lazy"
-                        className="w-full h-full object-cover"
+                    <motion.div 
+                        className="w-full h-full relative"
                         whileHover={{ scale: 1.1 }}
                         transition={{ duration: 0.5 }}
-                    />
+                    >
+                        <Image
+                            src={product.img}
+                            alt={product.title}
+                            fill
+                            sizes={isList ? "256px" : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"}
+                            priority={product.destacado}
+                            className="object-cover transition-opacity duration-300"
+                            loading={product.destacado ? "eager" : "lazy"}
+                        />
+                    </motion.div>
                 </div>
 
                 <div className={`flex ${isList ? 'flex-row items-center justify-between w-full p-6 gap-6' : 'flex-col flex-grow p-4'}`}>

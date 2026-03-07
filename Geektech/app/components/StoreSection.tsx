@@ -1,6 +1,7 @@
  'use client';
 
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import ProductCard, { Product } from './ProductCard';
 import { parsePrices, mostrarPrecio } from '../lib/price';
 import ProductFilter from './ProductFilter';
@@ -72,8 +73,13 @@ export default function StoreSection() {
                             {products.filter(p => !!p.destacado).slice(0, 5).map(p => (
                                 <div key={p.id} className="group cursor-pointer">
                                     <div className="flex gap-4 items-center">
-                                        <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 border border-white/5 bg-black/40">
-                                            <img src={p.img} alt={p.title} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
+                                        <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 border border-white/5 bg-black/40 relative">
+                                            <Image 
+                                                src={p.img} 
+                                                alt={p.title} 
+                                                fill
+                                                className="object-cover transition-transform duration-300 group-hover:scale-110" 
+                                            />
                                         </div>
                                         <div className="min-w-0">
                                             <div className="text-sm font-bold text-white mb-1 truncate">{p.title}</div>

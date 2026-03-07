@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Product } from './ProductCard';
 import { useCart } from '../context/CartContext';
@@ -112,7 +113,13 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onClose })
                                 </button>
                                 
                                 <div className="w-full h-64 sm:h-72 bg-black/40 overflow-hidden relative flex items-center justify-center">
-                                    <img src={currentImg} alt={product.title} className="w-full h-full object-contain p-4" />
+                                    <Image 
+                                        src={currentImg} 
+                                        alt={product.title} 
+                                        fill
+                                        className="object-contain p-4"
+                                        priority
+                                    />
                                 </div>
                                 
                                 {allImages.length > 1 && (
@@ -121,9 +128,14 @@ const ProductModal: React.FC<ProductModalProps> = ({ product, isOpen, onClose })
                                             <button 
                                                 key={idx} 
                                                 onClick={() => setCurrentImg(img)} 
-                                                className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${currentImg === img ? 'border-purple-500 scale-105 shadow-md shadow-purple-500/20' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                                                className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all relative ${currentImg === img ? 'border-purple-500 scale-105 shadow-md shadow-purple-500/20' : 'border-transparent opacity-60 hover:opacity-100'}`}
                                             >
-                                                <img src={img} alt={`${product.title} thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                                                <Image 
+                                                    src={img} 
+                                                    alt={`${product.title} thumbnail ${idx + 1}`} 
+                                                    fill
+                                                    className="object-cover"
+                                                />
                                             </button>
                                         ))}
                                     </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 interface BannerConfig {
@@ -44,13 +45,14 @@ export default function HeroBanner() {
                 <div className="glow-orb orb-2" />
             </div>
 
-            <img
+            <Image
                 src={cfg.imagen_url || '/img/principal/banner.svg'}
-                className="hero-bg-image"
                 alt="Banner Geektech - Tienda de Software y Hardware"
-                fetchPriority="high"
-                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 1 }}
-                onError={(e) => { (e.target as HTMLImageElement).src = '/img/principal/banner.svg'; }}
+                fill
+                priority
+                className="hero-bg-image object-cover"
+                style={{ zIndex: 1 }}
+                onError={(e) => { (e.target as any).src = '/img/principal/banner.svg'; }}
             />
 
             <div className="hero-content">
