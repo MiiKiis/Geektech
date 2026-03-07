@@ -23,7 +23,8 @@ export default function CartSidebar() {
 
         let message = "Hola GeekTech, me interesa comprar:\n\n";
         cart.forEach(item => {
-            message += `• ${item.quantity}x ${item.title} - ${item.price * item.quantity} Bs\n`;
+            const priceNum = typeof item.price === 'string' ? parseFloat(item.price) || 0 : item.price;
+            message += `• ${item.quantity}x ${item.title} - ${priceNum * item.quantity} Bs\n`;
         });
         message += `\n*Total a Pagar: ${total} Bs*`;
 
@@ -95,7 +96,7 @@ export default function CartSidebar() {
                                             {item.price} Bs x {item.quantity}
                                         </p>
                                         <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                                            Sub: {item.price * item.quantity} Bs
+                                            Sub: {(typeof item.price === 'string' ? parseFloat(item.price) || 0 : item.price) * item.quantity} Bs
                                         </p>
                                     </div>
                                 </div>
@@ -124,7 +125,7 @@ export default function CartSidebar() {
                     <a
                         href={cart.length > 0 ? `https://api.whatsapp.com/send?phone=59168190472&text=${encodeURIComponent(
                             "Hola GeekTech, me interesa comprar:\n\n" +
-                            cart.map(i => `• ${i.quantity}x ${i.title} - ${i.price * i.quantity} Bs`).join('\n') +
+                            cart.map(i => `• ${i.quantity}x ${i.title} - ${(typeof i.price === 'string' ? parseFloat(i.price) || 0 : i.price) * i.quantity} Bs`).join('\n') +
                             `\n\n*Total a Pagar: ${total} Bs*`
                         )}` : '#'}
                         target="_blank"
