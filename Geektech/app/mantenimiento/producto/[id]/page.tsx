@@ -72,9 +72,15 @@ export default async function ComponenteDetailPage(
 
     if (!product) notFound();
 
-    const variants = parsePrices(product.variantes_precio);
+    const variantsList = parsePrices(product.variantes_precio);
     const basePrice = product.precio ? parseFloat(product.precio) : null;
-    const displayPrice = basePrice ?? (variants.length > 0 ? Math.min(...variants.map(v => v.value)) : null);
+    
+    const validatedVariants = variantsList.map(v => ({
+        label: v.label,
+        value: typeof v.value === 'string' ? parseFloat(v.value) || 0 : v.value
+    }));
+
+    const displayPrice = basePrice ?? (validatedVariants.length > 0 ? Math.min(...validatedVariants.map(v => v.value)) : null);
 
     const categoryColor: Record<string, string> = {
         'Mantenimiento': '#a78bfa',
@@ -204,7 +210,7 @@ export default async function ComponenteDetailPage(
                         <VariantSelector
                             productName={product.nombre}
                             productCategory={product.categoria}
-                            variants={variants}
+                            variants={validatedVariants}
                             basePrice={displayPrice}
                             accentColor={accentColor}
                         />
