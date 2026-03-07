@@ -1,7 +1,8 @@
 import { Metadata } from 'next';
 
-export async function generateMetadata({ params }: { params: { category: string } }): Promise<Metadata> {
-    const category = params.category;
+export async function generateMetadata({ params }: { params: Promise<{ category: string }> }): Promise<Metadata> {
+    const resolvedParams = await params;
+    const category = resolvedParams?.category || '';
 
     const titles: Record<string, string> = {
         'tienda': 'Tienda',
@@ -20,7 +21,7 @@ export async function generateMetadata({ params }: { params: { category: string 
         'home-game': 'Descubre nuestros juegos más populares y ofertas destacadas.',
     };
 
-    const title = titles[category] || category.charAt(0).toUpperCase() + category.slice(1);
+    const title = titles[category] || (category ? category.charAt(0).toUpperCase() + category.slice(1) : 'Categoría');
     const description = descriptions[category] || `Descubre los mejores productos en la categoría ${title} en GeekTech Store.`;
 
     return {
