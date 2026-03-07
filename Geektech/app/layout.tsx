@@ -11,7 +11,7 @@ export const metadata: Metadata = {
         template: '%s | GeekTech Store',
         default: 'GeekTech Store - Software, Hardware y Servicios Premium',
     },
-    description: 'La mejor tienda de licencias de software, hardware gamer, cuentas de streaming y tarjetas de regalo en Bolivia.',
+    description: 'La mejor tienda de licencias de software, hardware gamer, cuentas de streaming y tarjetas de regalo en Bolivia. Encuentra ofertas premium hoy.',
     keywords: ['software', 'windows', 'office', 'antivirus', 'streaming', 'netflix', 'spotify', 'hardware', 'bolivia', 'tecnologia', 'geek', 'store'],
     authors: [{ name: 'GeekTech' }],
     creator: 'GeekTech Team',
