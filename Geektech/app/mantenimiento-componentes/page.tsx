@@ -435,7 +435,7 @@ function MantenimientoContent() {
                             
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                                 {products.filter((p: any) => p.destacado).slice(0, 5).map((p: any) => (
-                                    <Link key={p.id} href={`/product/${p.id}`} style={{ textDecoration: 'none' }} className="group">
+                                    <Link key={p.id} href={`/producto/mantenimiento-componentes/${p.id}`} style={{ textDecoration: 'none' }} className="group">
                                         <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
                                             <div style={{ width: '70px', height: '70px', borderRadius: '14px', overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)', background: '#0c0c12' }}>
                                                 <img src={p.imagen_url || '/img/placeholder.jpg'} alt={p.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} className="transition-transform duration-300 group-hover:scale-110" />
@@ -522,19 +522,15 @@ function MantenimientoContent() {
                                 : 'flex flex-col gap-4 w-full max-w-5xl mx-auto'
                             }>
                             {filteredProducts.map(p => (
-                                <Link
-                                    key={p.id}
-                                    href={`/mantenimiento/producto/${p.id}`}
-                                    style={{ textDecoration: 'none', display: 'block' }}
-                                >
-                                    <ProductCard product={{
+                                    <ProductCard key={p.id} product={{
                                         id: p.id, title: p.nombre, subtitle: p.server_info,
+                                        description: p.descripcion || '',
                                         img: p.imagen_url || '/img/placeholder.jpg', price: mostrarPrecio(p),
                                         prices: parsePrices(p.variantes_precio), genre: p.categoria,
                                         imagenes_adicionales: p.imagenes_adicionales || [],
-                                        agotado: !!p.agotado, destacado: !!p.destacado
+                                        agotado: !!p.agotado, destacado: !!p.destacado,
+                                        detailHref: `/producto/mantenimiento-componentes/${p.id}`,
                                     }} viewMode={viewMode} />
-                                </Link>
                             ))}
                         </div>
                     ) : (

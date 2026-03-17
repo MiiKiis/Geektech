@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import { safeFetch } from '@/lib/safeFetch';
 
 // ── Types ────────────────────────────────────────────────────
 type Section = 'dashboard' | 'banner' | 'inicio' | 'mantenimiento' | 'streaming';
@@ -9,7 +10,7 @@ interface BaseProduct { id: number; nombre: string; descripcion: string | null; 
 interface HomeProduct extends BaseProduct { categoria: string | null; }
 interface MantProduct extends BaseProduct { categoria: string; tipo: string | null; }
 interface StreamProduct extends BaseProduct { plataforma: string | null; duracion: string | null; destacado?: boolean; imagenes_adicionales?: any; }
-interface PriceVariant { label: string; value: string; }
+interface PriceVariant { label: string; value: string; extraTitle?: string; }
 
 // ── Constants ────────────────────────────────────────────────
 const ADMIN_PASSWORD_HASH = '95c82faedb5adebc2fd3121c64cb178eca183c1a2911b9efe8f0bd4272abf2da';
@@ -31,12 +32,27 @@ const SECTION_META = {
 // ── Helpers ──────────────────────────────────────────────────
 function parseVariants(str: string | null): PriceVariant[] {
     if (!str) return [];
-    try { const a = JSON.parse(str); if (Array.isArray(a)) return a.map(v => ({ label: String(v.label ?? ''), value: String(v.value ?? '') })); } catch { }
+    try {
+        const a = JSON.parse(str);
+        if (Array.isArray(a)) {
+            return a.map(v => ({
+                label: String(v.label ?? ''),
+                value: String(v.value ?? ''),
+                extraTitle: String(v.extraTitle ?? v.extra_title ?? ''),
+            }));
+        }
+    } catch { }
     return [];
 }
 function buildVariantsJSON(vs: PriceVariant[]) {
     const c = vs.filter(v => v.label.trim() && v.value.trim());
-    return c.length ? JSON.stringify(c.map(v => ({ label: v.label.trim(), value: v.value.trim() }))) : '';
+    return c.length
+        ? JSON.stringify(c.map(v => ({
+            label: v.label.trim(),
+            value: v.value.trim(),
+            extraTitle: (v.extraTitle ?? '').trim() || undefined,
+        })))
+        : '';
 }
 function parseImages(str: any): string[] {
     if (!str) return [];
@@ -45,6 +61,31 @@ function parseImages(str: any): string[] {
     }
     if (Array.isArray(str)) return str;
     return [];
+}
+function countLabel(count: number, singular: string, plural?: string) {
+    const resolvedPlural = plural ?? `${singular}s`;
+    return `${count} ${count === 1 ? singular : resolvedPlural}`;
+}
+function formatMoney(value: string | number | null | undefined) {
+    const parsed = typeof value === 'number' ? value : Number.parseFloat(String(value ?? ''));
+    return Number.isNaN(parsed) ? null : `Bs ${parsed.toFixed(2)}`;
+}
+function getPricingSummary(product: any) {
+    const variants = parseVariants(product.variantes_precio);
+    if (variants.length > 1) {
+        return `${countLabel(variants.length, 'opción')} disponibles`;
+    }
+    if (variants.length === 1) {
+        const [variant] = variants;
+        return `Opción única: ${variant.label} · ${formatMoney(variant.value) ?? variant.value}`;
+    }
+    return formatMoney(product.precio) ?? 'Sin precio definido';
+}
+function getPricingTitle(product: any) {
+    const variants = parseVariants(product.variantes_precio);
+    if (variants.length > 1) return 'Variantes';
+    if (variants.length === 1) return 'Opción única';
+    return 'Precio único';
 }
 
 // ════════════════════════════════════════════════════════════
@@ -85,8 +126,8 @@ export default function AdminPage() {
     const [form, setForm] = useState<Record<string, string>>({});
     const [initialForm, setInitialForm] = useState<Record<string, string>>({});
     const [usaVariantes, setUsaVariantes] = useState(false);
-    const [variants, setVariants] = useState<PriceVariant[]>([{ label: '', value: '' }]);
-    const [initialVariants, setInitialVariants] = useState<PriceVariant[]>([{ label: '', value: '' }]);
+    const [variants, setVariants] = useState<PriceVariant[]>([{ label: '', value: '', extraTitle: '' }]);
+    const [initialVariants, setInitialVariants] = useState<PriceVariant[]>([{ label: '', value: '', extraTitle: '' }]);
     const [addImgs, setAddImgs] = useState<string[]>([]);
     const [initialAddImgs, setInitialAddImgs] = useState<string[]>([]);
     const [saving, setSaving] = useState(false);
@@ -132,39 +173,34 @@ export default function AdminPage() {
 
     const loadAll = useCallback(async () => {
         const [h, m, s] = await Promise.allSettled([
-            fetch('/api/admin/home-game').then(r => r.json()),
-            fetch('/api/admin/products').then(r => r.json()),
-            fetch('/api/admin/streaming').then(r => r.json()),
+            safeFetch('/api/admin/home-game'),
+            safeFetch('/api/admin/products'),
+            safeFetch('/api/admin/streaming'),
         ]);
         setCounts({
-            inicio: h.status === 'fulfilled' && Array.isArray(h.value) ? h.value.length : 0,
-            mantenimiento: m.status === 'fulfilled' && Array.isArray(m.value) ? m.value.length : 0,
-            streaming: s.status === 'fulfilled' && Array.isArray(s.value) ? s.value.length : 0,
+            inicio: h.status === 'fulfilled' && h.value.ok && Array.isArray(h.value.data) ? h.value.data.length : 0,
+            mantenimiento: m.status === 'fulfilled' && m.value.ok && Array.isArray(m.value.data) ? m.value.data.length : 0,
+            streaming: s.status === 'fulfilled' && s.value.ok && Array.isArray(s.value.data) ? s.value.data.length : 0,
         });
-        if (h.status === 'fulfilled') setHomeData(Array.isArray(h.value) ? h.value : []);
-        if (m.status === 'fulfilled') setMantData(Array.isArray(m.value) ? m.value : []);
-        if (s.status === 'fulfilled') setStreamData(Array.isArray(s.value) ? s.value : []);
+        if (h.status === 'fulfilled' && h.value.ok) setHomeData(Array.isArray(h.value.data) ? h.value.data : []);
+        if (m.status === 'fulfilled' && m.value.ok) setMantData(Array.isArray(m.value.data) ? m.value.data : []);
+        if (s.status === 'fulfilled' && s.value.ok) setStreamData(Array.isArray(s.value.data) ? s.value.data : []);
     }, []);
 
     useEffect(() => { if (authed) { loadAll(); loadBanner(); } }, [authed, loadAll]);
 
     // ── Load banner ──
     const loadBanner = async () => {
-        try {
-            const res = await fetch('/api/admin/banner');
-            if (res.ok) { const d = await res.json(); if (d) { setBanner(d); setBannerLoaded(true); } }
-        } catch { }
+        const { data, ok } = await safeFetch('/api/admin/banner');
+        if (ok && data) { setBanner(data); setBannerLoaded(true); }
     };
 
     const saveBanner = async () => {
         setBannerSaving(true);
-        try {
-            const res = await fetch('/api/admin/banner', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(banner) });
-            const json = await res.json();
-            if (!res.ok) throw new Error(json.error);
-            showToast('✅ Banner actualizado — se verá en la página principal');
-        } catch (e: any) { showToast(`❌ Error: ${e.message}`, false); }
-        finally { setBannerSaving(false); }
+        const { error } = await safeFetch('/api/admin/banner', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(banner) });
+        if (error) showToast(`❌ Error: ${error}`, false);
+        else showToast('✅ Banner actualizado — se verá en la página principal');
+        setBannerSaving(false);
     };
 
     const bSet = (key: string, val: string) => setBanner(b => ({ ...b, [key]: val }));
@@ -183,8 +219,8 @@ export default function AdminPage() {
         setForm(defaults);
         setInitialForm(defaults);
         setUsaVariantes(false);
-        setVariants([{ label: '', value: '' }]);
-        setInitialVariants([{ label: '', value: '' }]);
+        setVariants([{ label: '', value: '', extraTitle: '' }]);
+        setInitialVariants([{ label: '', value: '', extraTitle: '' }]);
         setAddImgs([]);
         setInitialAddImgs([]);
         setModalOpen(true);
@@ -194,7 +230,7 @@ export default function AdminPage() {
         setEditing(p);
         const vars = parseVariants(p.variantes_precio);
         setUsaVariantes(vars.length > 0);
-        setVariants(vars.length > 0 ? vars : [{ label: '', value: '' }]);
+        setVariants(vars.length > 0 ? vars : [{ label: '', value: '', extraTitle: '' }]);
         const base: Record<string, string | boolean> = {
             nombre: p.nombre ?? '', descripcion: p.descripcion ?? '',
             precio: p.precio ?? '', imagen_url: p.imagen_url ?? '',
@@ -210,7 +246,7 @@ export default function AdminPage() {
 
         setForm(base as any);
         setInitialForm(base as any);
-        setInitialVariants(vars.length > 0 ? vars : [{ label: '', value: '' }]);
+        setInitialVariants(vars.length > 0 ? vars : [{ label: '', value: '', extraTitle: '' }]);
         setModalOpen(true);
     };
 
@@ -232,38 +268,39 @@ export default function AdminPage() {
     const save = async () => {
         if (!form.nombre?.trim()) return showToast('⚠️ El nombre es obligatorio', false);
         setSaving(true);
-        try {
-            const varJson = usaVariantes ? buildVariantsJSON(variants) : '';
-            const validImgs = addImgs.filter(u => u.trim());
-            const body: any = { 
-                ...form, 
-                variantes_precio: varJson || null, 
-                precio: !usaVariantes && form.precio ? form.precio : null,
-                imagenes_adicionales: validImgs
-            };
-            if (body.posicion === '') delete body.posicion;
+        const varJson = usaVariantes ? buildVariantsJSON(variants) : '';
+        const validImgs = addImgs.filter(u => u.trim());
+        const body: any = { 
+            ...form, 
+            variantes_precio: varJson || null, 
+            precio: !usaVariantes && form.precio ? form.precio : null,
+            imagenes_adicionales: validImgs
+        };
+        if (body.posicion === '') delete body.posicion;
 
-            const meta = SECTION_META[section as keyof typeof SECTION_META];
-            const url = editing ? `${meta.api}/${editing.id}` : meta.api;
-            const res = await fetch(url, { method: editing ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-            const json = await res.json();
-            if (!res.ok) throw new Error(json.error);
+        const meta = SECTION_META[section as keyof typeof SECTION_META];
+        const url = editing ? `${meta.api}/${editing.id}` : meta.api;
+        const { error } = await safeFetch(url, { method: editing ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        
+        if (error) showToast(`❌ Error: ${error}`, false);
+        else {
             showToast(editing ? '✅ Guardado correctamente' : '✅ Producto creado');
             closeModal();
             loadAll();
-        } catch (e: any) { showToast(`❌ Error: ${e.message}`, false); }
-        finally { setSaving(false); }
+        }
+        setSaving(false);
     };
 
     // ── Delete ──
     const del = async (id: number) => {
-        try {
-            const meta = SECTION_META[section as keyof typeof SECTION_META];
-            await fetch(`${meta.api}/${id}`, { method: 'DELETE' });
+        const meta = SECTION_META[section as keyof typeof SECTION_META];
+        const { error } = await safeFetch(`${meta.api}/${id}`, { method: 'DELETE' });
+        if (error) showToast(`❌ Error: ${error}`, false);
+        else {
             showToast('🗑️ Eliminado');
             setDelConfirm(null);
             loadAll();
-        } catch { showToast('❌ Error al eliminar', false); }
+        }
     };
 
     // ── Move position ──
@@ -277,23 +314,26 @@ export default function AdminPage() {
         const posB = b.posicion ?? targetIdx + 1;
 
         const meta = SECTION_META[section as keyof typeof SECTION_META];
-        try {
-            await Promise.all([
-                fetch(`${meta.api}/${a.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ posicion: posB }) }),
-                fetch(`${meta.api}/${b.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ posicion: posA }) }),
-            ]);
+        const [resA, resB] = await Promise.all([
+            safeFetch(`${meta.api}/${a.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ posicion: posB }) }),
+            safeFetch(`${meta.api}/${b.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ posicion: posA }) }),
+        ]);
+        
+        if (resA.error || resB.error) showToast(`❌ Error: ${resA.error || resB.error}`, false);
+        else {
             showToast('↕️ Orden actualizado');
             loadAll();
-        } catch { showToast('❌ Error al reordenar', false); }
+        }
     };
 
     const setPosDirectly = async (id: number, newPos: number) => {
         const meta = SECTION_META[section as keyof typeof SECTION_META];
-        try {
-            await fetch(`${meta.api}/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ posicion: newPos }) });
+        const { error } = await safeFetch(`${meta.api}/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ posicion: newPos }) });
+        if (error) showToast(`❌ Error: ${error}`, false);
+        else {
             showToast('📍 Posición actualizada');
             loadAll();
-        } catch { showToast('❌ Error', false); }
+        }
     };
 
     // ── Computed data (ordered by posicion) ──
@@ -618,7 +658,7 @@ export default function AdminPage() {
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, flexWrap: 'wrap', gap: 16 }}>
                                     <div>
                                         <h1 style={{ ...S.h1, marginBottom: 4 }}>{meta.icon} {meta.label}</h1>
-                                        <p style={S.muted}>{filtered.length} de {currentData.length} productos</p>
+                                        <p style={S.muted}>{countLabel(filtered.length, 'producto')} de {countLabel(currentData.length, 'producto')}</p>
                                     </div>
                                     <button onClick={openNew} style={S.btn('#8b5cf6')}>+ Agregar producto</button>
                                 </div>
@@ -656,7 +696,6 @@ export default function AdminPage() {
                                     /* Product list */
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                                         {filtered.map((p: any, idx: number) => {
-                                            const vars = parseVariants(p.variantes_precio);
                                             const badge = p.plataforma ?? p.categoria ?? p.tipo ?? '';
                                             const badgeColor = { Mantenimiento: '#a78bfa', Componentes: '#10b981', Laptops: '#3b82f6', Accesorios: '#f472b6', Netflix: '#e50914', Spotify: '#1db954' }[badge] ?? meta.color;
                                             const isFirst = idx === 0;
@@ -701,9 +740,7 @@ export default function AdminPage() {
                                                             {p.duracion && <span style={{ fontSize: 11, color: '#6b7280' }}>· {p.duracion}</span>}
                                                         </div>
                                                         <div style={{ fontSize: 14, color: '#6b7280' }}>
-                                                            {vars.length > 0
-                                                                ? `${vars.length} opciones`
-                                                                : p.precio ? `Bs ${parseFloat(p.precio).toFixed(2)}` : 'Sin precio definido'}
+                                                            {getPricingSummary(p)}
                                                             {p.descripcion && <span style={{ marginLeft: 10 }}>· {p.descripcion.slice(0, 55)}{p.descripcion.length > 55 ? '…' : ''}</span>}
                                                         </div>
                                                     </div>
@@ -797,6 +834,11 @@ export default function AdminPage() {
                                     <button onClick={() => setUsaVariantes(false)} style={{ ...S.btn(usaVariantes ? '#1f2937' : '#8b5cf6', 'sm'), flex: 1 }}>💰 Precio único</button>
                                     <button onClick={() => setUsaVariantes(true)} style={{ ...S.btn(usaVariantes ? '#8b5cf6' : '#1f2937', 'sm'), flex: 1 }}>📋 Varias opciones</button>
                                 </div>
+                                <p style={{ color: '#6b7280', fontSize: 12, margin: '8px 0 0' }}>
+                                    {usaVariantes
+                                        ? 'Usa esta opción cuando el mismo producto tenga varias presentaciones, planes o tamaños.'
+                                        : 'Usa esta opción cuando el producto tenga un solo precio final.'}
+                                </p>
                             </Fld>
 
                             {!usaVariantes ? (
@@ -808,17 +850,23 @@ export default function AdminPage() {
                                 <Fld label="Opciones de precio">
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                                         {variants.map((v, i) => (
-                                            <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                            <div key={i} style={{ display: 'grid', gap: 8, alignItems: 'center', gridTemplateColumns: '1.6fr 1fr 1.6fr auto' }}>
                                                 <input value={v.label} onChange={e => setVariants(vs => vs.map((x, j) => j === i ? { ...x, label: e.target.value } : x))}
                                                     placeholder={`Opción ${i + 1} — ej: 8GB, 1 mes, Pro...`}
-                                                    style={{ ...S.input, flex: 2 }} />
+                                                    style={{ ...S.input }} />
                                                 <input value={v.value} onChange={e => setVariants(vs => vs.map((x, j) => j === i ? { ...x, value: e.target.value } : x))}
-                                                    placeholder="Precio (Ej: 25 o texto)" style={{ ...S.input, flex: 1 }} />
+                                                    placeholder="Precio (Ej: 25 o texto)" style={{ ...S.input }} />
+                                                <input value={v.extraTitle ?? ''} onChange={e => setVariants(vs => vs.map((x, j) => j === i ? { ...x, extraTitle: e.target.value } : x))}
+                                                    placeholder="Título adicional (opcional)"
+                                                    style={{ ...S.input }} />
                                                 {variants.length > 1 && <button onClick={() => setVariants(vs => vs.filter((_, j) => j !== i))} style={{ color: '#f87171', background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', lineHeight: 1 }}>×</button>}
                                             </div>
                                         ))}
-                                        <button onClick={() => setVariants(vs => [...vs, { label: '', value: '' }])}
+                                        <button onClick={() => setVariants(vs => [...vs, { label: '', value: '', extraTitle: '' }])}
                                             style={{ ...S.btn('#1f2937', 'sm'), alignSelf: 'flex-start' }}>+ Añadir opción</button>
+                                        <p style={{ color: '#6b7280', fontSize: 12, margin: '2px 0 0' }}>
+                                            El título adicional es opcional. Si lo dejas vacío, no se mostrará.
+                                        </p>
                                     </div>
                                 </Fld>
                             )}
@@ -911,19 +959,19 @@ export default function AdminPage() {
                             <p style={{ color: '#9ca3af', fontSize: 15, lineHeight: 1.6, margin: '0 0 20px' }}>{quickView.descripcion || 'Sin descripción'}</p>
 
                             <div style={{ padding: 16, background: 'rgba(255,255,255,0.03)', borderRadius: 12, border: '1px solid rgba(255,255,255,0.05)' }}>
-                                <div style={{ color: '#a78bfa', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>Precio / Variantes</div>
+                                <div style={{ color: '#a78bfa', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>{getPricingTitle(quickView)}</div>
                                 {parseVariants(quickView.variantes_precio).length > 0 ? (
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                                         {parseVariants(quickView.variantes_precio).map((v, i) => (
                                             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: 8, background: 'rgba(0,0,0,0.2)', borderRadius: 8 }}>
                                                 <span style={{ color: '#fff' }}>{v.label}</span>
-                                                <span style={{ color: '#10b981', fontWeight: 700 }}>{v.value}</span>
+                                                <span style={{ color: '#10b981', fontWeight: 700 }}>{formatMoney(v.value) ?? v.value}</span>
                                             </div>
                                         ))}
                                     </div>
                                 ) : (
                                     <div style={{ fontSize: 20, color: '#10b981', fontWeight: 800 }}>
-                                        {quickView.precio ? `Bs ${parseFloat(quickView.precio).toFixed(2)}` : 'Consulte precio'}
+                                        {formatMoney(quickView.precio) ?? 'Consulte precio'}
                                     </div>
                                 )}
                             </div>

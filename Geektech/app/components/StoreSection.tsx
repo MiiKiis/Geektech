@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import ProductCard, { Product } from './ProductCard';
 import { parsePrices, mostrarPrecio } from '../lib/price';
 import ProductFilter from './ProductFilter';
@@ -27,6 +28,7 @@ export default function StoreSection() {
                     id: item.id,
                     title: item.nombre,
                     subtitle: item.categoria || item.server_info || '',
+                    description: item.descripcion || '',
                     price: mostrarPrecio(item),
                     img: item.imagen_url || item.imagen || '/img/placeholder.jpg',
                     prices: parsePrices(item.variantes_precio),
@@ -35,6 +37,7 @@ export default function StoreSection() {
                     imagenes_adicionales: item.imagenes_adicionales || [],
                     agotado: !!item.agotado,
                     destacado: !!item.destacado,
+                    detailHref: `/producto/juegos/${item.id}`,
                 }));
 
                 setProducts(mapped);
@@ -59,11 +62,11 @@ export default function StoreSection() {
     });
 
     return (
-        <div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8 py-8">
+        <section className="renewed-store-shell px-4 sm:px-6 lg:px-8 py-8">
             <div className="flex flex-col lg:flex-row gap-8 items-start">
                 {/* Sidebar: Featured Products */}
                 <aside className="hidden lg:block w-[280px] sticky top-[100px] shrink-0">
-                    <div className="bg-gradient-to-b from-[#1e1e24] to-[#17171f] rounded-3xl border border-white/10 p-6 shadow-2xl">
+                    <div className="bg-gradient-to-b from-[#1c1537] to-[#151129] rounded-3xl border border-[#3b2b69] p-6 shadow-2xl">
                         <div className="flex items-center gap-3 mb-6">
                             <span className="text-2xl">⚡</span>
                             <h3 className="text-base font-black text-white uppercase tracking-wider m-0">Más Comprados</h3>
@@ -71,7 +74,7 @@ export default function StoreSection() {
                         
                         <div className="flex flex-col gap-5">
                             {products.filter(p => !!p.destacado).slice(0, 5).map(p => (
-                                <div key={p.id} className="group cursor-pointer">
+                                <Link key={p.id} href={p.detailHref || `/producto/juegos/${p.id}`} className="group cursor-pointer block">
                                     <div className="flex gap-4 items-center">
                                         <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 border border-white/5 bg-black/40 relative">
                                             <Image 
@@ -83,10 +86,10 @@ export default function StoreSection() {
                                         </div>
                                         <div className="min-w-0">
                                             <div className="text-sm font-bold text-white mb-1 truncate">{p.title}</div>
-                                            <div className="text-xs font-black text-purple-400 uppercase">{typeof p.price === 'number' ? `Bs ${p.price.toFixed(2)}` : p.price}</div>
+                                            <div className="text-xs font-black text-[#c6a2ff] uppercase">{typeof p.price === 'number' ? `Bs ${p.price.toFixed(2)}` : p.price}</div>
                                         </div>
                                     </div>
-                                </div>
+                                </Link>
                             ))}
                             {products.filter(p => p.destacado).length === 0 && (
                                 <p className="text-gray-500 text-xs text-center py-4 italic">Nuevos destacados próximamente</p>
@@ -94,7 +97,7 @@ export default function StoreSection() {
                         </div>
 
                         <div className="mt-8 pt-6 border-t border-white/5">
-                            <button className="w-full py-3 bg-white/5 hover:bg-white/10 text-white text-xs font-bold rounded-xl transition-all border border-white/5 uppercase tracking-widest">
+                            <button className="w-full py-3 bg-[#6f2dff] hover:bg-[#5f23e2] text-white text-xs font-bold rounded-xl transition-all border border-[#8d52ff] uppercase tracking-widest">
                                 Ver Ofertas
                             </button>
                         </div>
@@ -119,7 +122,7 @@ export default function StoreSection() {
 
                 {loading ? (
                     <div className="flex justify-center py-20">
-                        <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                        <div className="w-12 h-12 border-4 border-[#9b5cff] border-t-transparent rounded-full animate-spin" />
                     </div>
                 ) : filteredProducts.length > 0 ? (
                     <div className={viewMode === 'grid'
@@ -143,6 +146,6 @@ export default function StoreSection() {
                 )}
                 </main>
             </div>
-        </div>
+        </section>
     );
 }

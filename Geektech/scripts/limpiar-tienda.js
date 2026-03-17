@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { neon } = require('@neondatabase/serverless');
+const postgres = require('postgres');
 
 function loadEnv() {
     try {
@@ -28,7 +28,7 @@ if (!process.env.DATABASE_URL) {
     process.exit(1);
 }
 
-const sql = neon(process.env.DATABASE_URL);
+const sql = postgres(process.env.DATABASE_URL, { ssl: 'require' });
 
 async function limpiarTienda() {
     try {

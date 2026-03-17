@@ -18,6 +18,8 @@ type CartContextType = {
     removeFromCart: (id: string | number) => void;
     clearCart: () => void;
     toggleCart: () => void;
+    openCart: () => void;
+    closeCart: () => void;
     isCartOpen: boolean;
     total: number;
 };
@@ -92,13 +94,21 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setIsCartOpen(!isCartOpen);
     };
 
+    const openCart = () => {
+        setIsCartOpen(true);
+    };
+
+    const closeCart = () => {
+        setIsCartOpen(false);
+    };
+
     const total = cart.reduce((sum, item) => {
         const p = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
         return sum + ((isNaN(p) ? 0 : p) * item.quantity);
     }, 0);
 
     return (
-        <CartContext.Provider value={{ cart, addToCart, removeFromCart, clearCart, toggleCart, isCartOpen, total }}>
+        <CartContext.Provider value={{ cart, addToCart, removeFromCart, clearCart, toggleCart, openCart, closeCart, isCartOpen, total }}>
             {children}
         </CartContext.Provider>
     );

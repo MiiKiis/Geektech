@@ -1,17 +1,30 @@
 import './globals.css';
 import type { Metadata } from 'next';
+import { Space_Grotesk, Sora } from 'next/font/google';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import { CartProvider } from './context/CartContext';
 import CartSidebar from './components/CartSidebar';
 
+const displayFont = Space_Grotesk({
+    subsets: ['latin'],
+    variable: '--font-display',
+    weight: ['500', '700'],
+});
+
+const bodyFont = Sora({
+    subsets: ['latin'],
+    variable: '--font-body',
+    weight: ['400', '500', '600', '700'],
+});
+
 export const metadata: Metadata = {
     metadataBase: new URL('https://geektech.onl'),
     title: {
         template: '%s | GeekTech Store',
-        default: 'GeekTech Store - Software, Hardware y Servicios Premium',
+        default: 'GeekTech Store - Productos Digitales y Servicios Premium',
     },
-    description: 'La mejor tienda de licencias de software, hardware gamer, cuentas de streaming y tarjetas de regalo en Bolivia. Encuentra ofertas premium hoy.',
+    description: 'Tienda online de productos digitales en Bolivia: licencias, software, cuentas premium y servicios especializados. Mantenimiento y streaming con gestion dedicada.',
     keywords: ['software', 'windows', 'office', 'antivirus', 'streaming', 'netflix', 'spotify', 'hardware', 'bolivia', 'tecnologia', 'geek', 'store'],
     authors: [{ name: 'GeekTech' }],
     creator: 'GeekTech Team',
@@ -74,11 +87,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     };
 
     return (
-        <html lang="es" className="dark" style={{ colorScheme: 'dark' }} data-theme="dark" suppressHydrationWarning>
+        <html lang="es" className={`dark ${displayFont.variable} ${bodyFont.variable}`} style={{ colorScheme: 'dark' }} data-theme="dark" suppressHydrationWarning>
             <head>
                 <link rel="stylesheet" href="/css/styles.css?v=2" />
             </head>
-            <body className="bg-[#0f0f12] text-white antialiased" suppressHydrationWarning>
+            <body className="gt-dark-body antialiased" suppressHydrationWarning>
                 <script
                     type="application/ld+json"
                     dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

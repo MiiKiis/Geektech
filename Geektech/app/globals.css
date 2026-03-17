@@ -3,14 +3,185 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 10, 10, 15;
-  --background-end-rgb: 18, 18, 24;
+  --gt-bg: #090911;
+  --gt-bg-soft: #12121f;
+  --gt-surface: #1b1b2b;
+  --gt-text: #f5f6ff;
+  --gt-muted: #b6b8d8;
+  --gt-accent: #9b5cff;
+  --gt-accent-2: #6f2dff;
+  --gt-line: #2f2f49;
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
+.gt-dark-body {
+  min-height: 100vh;
+  color: var(--gt-text);
+  font-family: var(--font-body), sans-serif;
+  background:
+    radial-gradient(1100px 420px at 90% -10%, rgba(155, 92, 255, 0.24) 0%, transparent 60%),
+    radial-gradient(900px 380px at -10% 10%, rgba(111, 45, 255, 0.2) 0%, transparent 55%),
+    linear-gradient(180deg, var(--gt-bg) 0%, #0e0e18 100%);
+}
+
+.home-shell {
+  padding-top: 92px;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display), sans-serif;
+}
+
+@keyframes gtRise {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes gtPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+.renewed-hero {
+  position: relative;
+  overflow: hidden;
+  margin: 0 auto 14px;
+  width: min(1320px, calc(100% - 24px));
+  border-radius: 28px;
+  background: linear-gradient(140deg, #131325 0%, #1a1735 50%, #1a1d3f 100%);
+  color: #f4fbff;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 30px 70px rgba(7, 24, 35, 0.32);
+}
+
+.renewed-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(130deg, rgba(155, 92, 255, 0.3), transparent 38%),
+    radial-gradient(circle at 86% 20%, rgba(111, 45, 255, 0.24), transparent 48%);
+  pointer-events: none;
+}
+
+.renewed-hero-grid {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 24px;
+  min-height: 520px;
+  padding: 42px;
+}
+
+.renewed-hero .stagger {
+  animation: gtRise 0.7s ease both;
+}
+
+.renewed-hero .stagger-2 { animation-delay: 0.08s; }
+.renewed-hero .stagger-3 { animation-delay: 0.16s; }
+.renewed-hero .stagger-4 { animation-delay: 0.24s; }
+
+.hero-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.13);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.hero-cta-primary {
+  background: linear-gradient(90deg, var(--gt-accent), var(--gt-accent-2));
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(155, 92, 255, 0.35);
+}
+
+.hero-cta-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ebf8ff;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.hero-figure-frame {
+  position: relative;
+  border-radius: 22px;
+  min-height: 360px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(1, 1, 7, 0.48);
+}
+
+.hero-floating {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.hero-floating-card {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(22, 18, 43, 0.84);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(4px);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.hero-floating-badge {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.2);
+  animation: gtPulse 2s ease-in-out infinite;
+}
+
+.renewed-store-shell {
+  width: min(1320px, calc(100% - 24px));
+  margin: 16px auto 40px;
+  background: linear-gradient(180deg, rgba(24,24,39,0.92), rgba(14,14,26,0.92));
+  border: 1px solid var(--gt-line);
+  border-radius: 26px;
+  box-shadow: 0 16px 36px rgba(3, 3, 14, 0.45);
+}
+
+@media (max-width: 1024px) {
+  .home-shell {
+    padding-top: 88px;
+  }
+
+  .renewed-hero-grid {
+    grid-template-columns: 1fr;
+    padding: 26px;
+    min-height: auto;
+  }
+
+  .hero-figure-frame {
+    min-height: 300px;
+  }
 }

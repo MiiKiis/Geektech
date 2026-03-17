@@ -33,12 +33,14 @@ const ProductGrid: React.FC<ProductGridProps> = ({ category, viewMode = 'grid' }
                     id: item.id,
                     title: item.nombre,
                     subtitle: item.categoria || item.server_info || '',
+                    description: item.descripcion || '',
                     price: mostrarPrecio(item),
                     img: item.imagen_url || item.imagen || '/img/placeholder.jpg',
                     prices: parsePrices(item.variantes_precio),
                     genre: item.categoria || '',
                     platform: 'pc',
                     imagenes_adicionales: item.imagenes_adicionales || [],
+                    detailHref: `/producto/${category === 'streaming' ? 'cuentas-streaming' : category === 'mantenimiento-componentes' ? 'mantenimiento-componentes' : category === 'juegos' ? 'juegos' : (category || 'tienda')}/${item.id}`,
                 }));
 
                 setProducts(mapped);

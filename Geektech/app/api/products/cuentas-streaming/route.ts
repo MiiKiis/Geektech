@@ -1,14 +1,10 @@
-import { neon } from '@neondatabase/serverless';
+import { sql } from '@/lib/db';
 import { NextResponse } from 'next/server';
 
 export const revalidate = 0; // Sin caché, siempre refleja cambios en vivo
 
 export async function GET() {
     try {
-        if (!process.env.DATABASE_URL) {
-            throw new Error('DATABASE_URL is not defined');
-        }
-        const sql = neon(process.env.DATABASE_URL);
         const data = await sql`
             SELECT * FROM cuentas_streaming
             ORDER BY destacado DESC NULLS LAST, posicion ASC NULLS LAST, id ASC

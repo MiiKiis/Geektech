@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { sql } from '@/lib/db';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
@@ -10,11 +10,6 @@ export async function GET(request: Request) {
             return NextResponse.json([]);
         }
 
-        if (!process.env.DATABASE_URL) {
-            throw new Error('DATABASE_URL is not defined');
-        }
-
-        const sql = neon(process.env.DATABASE_URL);
         const searchTerm = `%${query}%`;
 
         const [homeGame, componentes, streaming] = await Promise.allSettled([

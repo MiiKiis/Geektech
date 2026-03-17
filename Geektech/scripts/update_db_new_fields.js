@@ -1,7 +1,7 @@
 require('dotenv').config({ path: '.env.local' });
-const { neon } = require('@neondatabase/serverless');
+const postgres = require('postgres');
 
-const sql = neon(process.env.DATABASE_URL);
+const sql = postgres(process.env.DATABASE_URL, { ssl: 'require' });
 
 async function runSQL() {
     try {

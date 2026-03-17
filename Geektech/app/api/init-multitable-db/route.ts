@@ -1,14 +1,8 @@
-import { neon } from '@neondatabase/serverless';
+import { sql } from '@/lib/db';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
-    if (!process.env.DATABASE_URL) {
-      throw new Error('DATABASE_URL is not defined');
-    }
-
-    const sql = neon(process.env.DATABASE_URL);
-
     await sql`DROP TABLE IF EXISTS tabla_creditos, tabla_licencias, tabla_streaming, banners CASCADE`;
     await sql`DROP TABLE IF EXISTS home, tienda, windows_keys, cuentas_streaming, home_game CASCADE`;
 

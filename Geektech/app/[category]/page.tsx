@@ -35,12 +35,14 @@ export default function CategoryPage() {
                     id: item.id,
                     title: item.nombre,
                     subtitle: item.categoria || item.server_info || item.tipo || item.plataforma || '',
+                    description: item.descripcion || '',
                     price: mostrarPrecio(item),
                     img: item.imagen_url || item.imagen || '/img/placeholder.jpg',
                     prices: parsePrices(item.variantes_precio),
                     genre: item.categoria || item.tipo || '',
                     platform: item.plataforma || 'pc',
                     imagenes_adicionales: item.imagenes_adicionales || [],
+                    detailHref: `/producto/${category === 'streaming' ? 'cuentas-streaming' : category}/${item.id}`,
                 }));
 
                 setProducts(mapped);

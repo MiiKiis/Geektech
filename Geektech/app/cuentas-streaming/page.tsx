@@ -273,7 +273,7 @@ function StreamingContent() {
                         
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                             {products.filter((p: any) => p.destacado).slice(0, 5).map((p: any) => (
-                                <div key={p.id} style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                                <Link key={p.id} href={`/producto/cuentas-streaming/${p.id}`} style={{ display: 'flex', gap: '14px', alignItems: 'center', textDecoration: 'none' }}>
                                     <div style={{ width: '70px', height: '70px', borderRadius: '14px', overflow: 'hidden', flexShrink: 0, border: '1px solid rgba(255,255,255,0.1)', background: '#0c0c12' }}>
                                         <img src={p.imagen_url || '/img/placeholder.jpg'} alt={p.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                     </div>
@@ -281,7 +281,7 @@ function StreamingContent() {
                                         <div style={{ fontSize: '14px', fontWeight: 700, color: '#fff', marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nombre}</div>
                                         <div style={{ fontSize: '13px', color: '#22c55e', fontWeight: 800 }}>Bs {parseFloat(p.precio || '0').toFixed(2)}</div>
                                     </div>
-                                </div>
+                                </Link>
                             ))}
                             {products.filter((p: any) => p.destacado).length === 0 && (
                                 <p style={{ color: '#6b7280', fontSize: '13px', textAlign: 'center', padding: '20px 0' }}>Promociones exclusivas pronto.</p>
@@ -311,10 +311,12 @@ function StreamingContent() {
                             <ProductCard key={p.id} product={{
                                 id: p.id, title: p.nombre,
                                 subtitle: `${p.plataforma} - ${p.duracion}`,
+                                description: p.descripcion || '',
                                 img: p.imagen_url || '/img/placeholder.jpg',
                                 price: parseFloat(p.precio) || 0, platform: p.plataforma,
                                 imagenes_adicionales: p.imagenes_adicionales || [],
-                                agotado: !!p.agotado, destacado: !!p.destacado
+                                agotado: !!p.agotado, destacado: !!p.destacado,
+                                detailHref: `/producto/cuentas-streaming/${p.id}`,
                             }} viewMode={viewMode} />
                         ))}
                     </div>

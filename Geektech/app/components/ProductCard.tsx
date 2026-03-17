@@ -3,12 +3,14 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import ProductModal from './ProductModal';
 
 export interface Product {
     id: string | number;
     title: string;
     subtitle?: string;
+    description?: string;
     price: number | string;
     img: string;
     prices?: { label: string; value: number | string }[];
@@ -17,6 +19,7 @@ export interface Product {
     imagenes_adicionales?: string[];
     agotado?: boolean;
     destacado?: boolean;
+    detailHref?: string;
 }
 
 interface ProductCardProps {
@@ -27,13 +30,33 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const isList = viewMode === 'list';
+    const router = useRouter();
+
+    const openProduct = () => {
+        if (product.detailHref) {
+            router.push(product.detailHref);
+            return;
+        }
+        if (!product.agotado) {
+            setIsModalOpen(true);
+        }
+    };
 
     return (
         <>
             <motion.article
                 className={`relative overflow-hidden transition-colors duration-300 hover:border-purple-500/50 bg-[#1e1e24] border border-white/5 rounded-2xl will-change-transform transform-gpu
-                    ${isList ? 'flex flex-row w-full h-48' : 'flex flex-col h-full w-full'}
+                    ${isList ? 'flex flex-row w-full h-56' : 'flex flex-col h-full w-full'}
                     ${product.agotado ? 'opacity-75 grayscale-[0.5]' : ''}`}
+                onClick={openProduct}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        openProduct();
+                    }
+                }}
                 whileHover={product.agotado ? {} : { y: isList ? -2 : -10, scale: isList ? 1.005 : 1.02 }}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -47,12 +70,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
                     </div>
                 )}
                 <div
-                    className={`relative overflow-hidden ${isList ? 'w-64 shrink-0' : 'w-full'} transform-gpu`}
-                    style={!isList ? { aspectRatio: '3/4' } : { height: '100%' }}
+                    className={`relative overflow-hidden ${isList ? 'w-64 shrink-0' : 'w-full'} transform-gpu bg-[#12121a]`}
+                    style={!isList ? { aspectRatio: '2/3' } : { height: '100%' }}
                 >
                     <motion.div 
                         className="w-full h-full relative"
-                        whileHover={{ scale: 1.1 }}
+                        whileHover={{ scale: 1.05 }}
                         transition={{ duration: 0.5 }}
                     >
                         <Image
@@ -61,7 +84,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
                             fill
                             sizes={isList ? "256px" : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"}
                             priority={product.destacado}
-                            className="object-cover transition-opacity duration-300"
+                            className="object-contain p-2 transition-opacity duration-300"
                             loading={product.destacado ? "eager" : "lazy"}
                         />
                     </motion.div>
@@ -77,11 +100,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
                                 {product.subtitle}
                             </p>
                         )}
-                        {typeof product.price === 'string' && product.price ? (
-                            <div className="text-xl font-bold text-purple-400 mb-4">{product.price}</div>
-                        ) : (product.prices && product.prices.length > 0) ? (
+                        {(product.prices && product.prices.length > 1) ? (
                             <span className="inline-block px-2 py-1 text-xs font-semibold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 rounded-full mb-4">
-                                Opciones Disponibles
+                                Mira los precios
+                            </span>
+                        ) : typeof product.price === 'string' && product.price ? (
+                            <div className="text-xl font-bold text-purple-400 mb-4">{product.price}</div>
+                        ) : (product.prices && product.prices.length === 1) ? (
+                            <span className="inline-block px-2 py-1 text-xs font-semibold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 rounded-full mb-4">
+                                Ver detalle
                             </span>
                         ) : (typeof product.price === 'number' && product.price > 0) ? (
                             <div className="text-xl font-bold text-purple-400 mb-4">
@@ -98,11 +125,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, viewMode = 'grid' })
                                     : 'bg-purple-primary text-white shadow-[0_4px_15px_rgba(112,0,255,0.4)] hover:bg-purple-hover hover:shadow-[0_6px_20px_rgba(112,0,255,0.6)]'}`}
                             whileTap={product.agotado ? {} : { scale: 0.95 }}
                             onClick={(e) => { 
-                                e.stopPropagation(); 
-                                if (!product.agotado) setIsModalOpen(true); 
+                                e.stopPropagation();
+                                openProduct();
                             }}
                         >
-                            {product.agotado ? 'Sin Stock' : 'Seleccionar'}
+                            {product.agotado ? 'Sin Stock' : 'Ver producto'}
                         </motion.button>
                     </div>
                 </div>

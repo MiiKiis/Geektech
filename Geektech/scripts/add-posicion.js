@@ -1,4 +1,4 @@
-const { neon } = require('@neondatabase/serverless');
+const postgres = require('postgres');
 const fs = require('fs'), path = require('path');
 
 function loadEnv() {
@@ -14,7 +14,7 @@ function loadEnv() {
 }
 loadEnv();
 
-const sql = neon(process.env.DATABASE_URL);
+const sql = postgres(process.env.DATABASE_URL, { ssl: 'require' });
 
 async function run() {
     console.log('📊 Agregando columna posicion a todas las tablas...');

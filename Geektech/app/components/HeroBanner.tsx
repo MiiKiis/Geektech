@@ -39,40 +39,65 @@ export default function HeroBanner() {
     }, []);
 
     return (
-        <section className="antigravity-hero" role="banner" aria-label="Destacado">
-            <div className="hero-bg-effects">
-                <div className="glow-orb orb-1" />
-                <div className="glow-orb orb-2" />
-            </div>
+        <section className="renewed-hero" role="banner" aria-label="Destacado GeekTech">
+            <div className="renewed-hero-grid">
+                <div className="flex flex-col justify-center gap-6">
+                    <div className="hero-chip stagger">
+                        <span>GeekTech 2.0</span>
+                        <span>Experiencia renovada</span>
+                    </div>
 
-            <Image
-                src={cfg.imagen_url || '/img/principal/banner.svg'}
-                alt="Banner Geektech - Tienda de Software y Hardware"
-                fill
-                priority
-                className="hero-bg-image object-cover"
-                style={{ zIndex: 1 }}
-                onError={(e) => { (e.target as any).src = '/img/principal/banner.svg'; }}
-            />
+                    <h1 className="stagger stagger-2 text-4xl md:text-6xl font-bold leading-tight tracking-tight max-w-2xl">
+                        {cfg.titulo}
+                    </h1>
 
-            <div className="hero-content">
-                <h1>{cfg.titulo}</h1>
-                <p>{cfg.subtitulo}</p>
-                <div className="hero-actions">
-                    <Link href={cfg.btn_link || '/mantenimiento-componentes'} className="btn-hero primary-glow">
-                        {cfg.btn_texto || 'Ver Productos'}
-                    </Link>
+                    <p className="stagger stagger-3 text-base md:text-lg text-violet-100/85 max-w-xl leading-relaxed">
+                        {cfg.subtitulo} Tienda enfocada en productos digitales; mantenimiento y streaming con gestion especializada.
+                    </p>
+
+                    <div className="stagger stagger-4 flex flex-wrap gap-3">
+                        <Link href={cfg.btn_link || '/mantenimiento-componentes'} className="hero-cta-primary rounded-xl px-6 py-3 font-semibold transition-transform hover:scale-[1.03]">
+                            {cfg.btn_texto || 'Ver Productos'}
+                        </Link>
+                        <Link href="/cuentas-streaming" className="hero-cta-secondary rounded-xl px-6 py-3 font-semibold transition-transform hover:scale-[1.03]">
+                            Ver Streaming
+                        </Link>
+                    </div>
+
+                    <div className="stagger stagger-4 grid grid-cols-2 gap-3 max-w-md">
+                        <div className="rounded-xl border border-white/20 bg-white/10 p-3">
+                            <p className="text-xs uppercase tracking-wider text-violet-100/80">Entrega</p>
+                            <p className="text-xl font-semibold">Inmediata</p>
+                        </div>
+                        <div className="rounded-xl border border-white/20 bg-white/10 p-3">
+                            <p className="text-xs uppercase tracking-wider text-violet-100/80">Soporte</p>
+                            <p className="text-xl font-semibold">7 Dias</p>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div className="hero-visuals">
-                <div className="floating-card glass-card">
-                    <div className="icon-box">{cfg.badge1_icon}</div>
-                    <span>{cfg.badge1_text}</span>
-                </div>
-                <div className="floating-card glass-card delayed">
-                    <div className="icon-box">{cfg.badge2_icon}</div>
-                    <span>{cfg.badge2_text}</span>
+                <div className="relative flex items-center">
+                    <div className="hero-figure-frame w-full">
+                        <Image
+                            src={cfg.imagen_url || '/img/principal/banner.svg'}
+                            alt="Banner Geektech - Tienda de Software y Hardware"
+                            fill
+                            priority
+                            className="object-cover"
+                            onError={(e) => { (e.target as any).src = '/img/principal/banner.svg'; }}
+                        />
+
+                        <div className="hero-floating">
+                            <div className="hero-floating-card">
+                                <span className="hero-floating-badge">{cfg.badge1_icon}</span>
+                                <span>{cfg.badge1_text}</span>
+                            </div>
+                            <div className="hero-floating-card">
+                                <span className="hero-floating-badge">{cfg.badge2_icon}</span>
+                                <span>{cfg.badge2_text}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>

@@ -1,4 +1,4 @@
-import { neon } from '@neondatabase/serverless';
+import { sql } from '@/lib/db';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { parsePrices } from '../../../lib/price';
@@ -49,11 +49,9 @@ export async function generateMetadata(
 
 // ── Data fetching (Server Component — Neon direct) ────────────
 async function fetchProduct(id: string): Promise<Componente | null> {
-    if (!process.env.DATABASE_URL) return null;
     const numericId = parseInt(id, 10);
     if (isNaN(numericId)) return null;
 
-    const sql = neon(process.env.DATABASE_URL);
     const rows = await sql`
         SELECT id, nombre, descripcion, precio, imagen_url, categoria, tipo, variantes_precio
         FROM componentes_pcs

@@ -1,39 +1,17 @@
 
 const fs = require('fs');
 const path = require('path');
-const { neon } = require('@neondatabase/serverless');
+const postgres = require('postgres');
+const dotenv = require('dotenv');
 
-// Load environment variables manually since dotenv is not installed
-function loadEnv() {
-    try {
-        const envPath = path.join(__dirname, '..', '.env.local');
-        if (fs.existsSync(envPath)) {
-            const envContent = fs.readFileSync(envPath, 'utf8');
-            const lines = envContent.split('\n');
-            for (const line of lines) {
-                const match = line.match(/^([^=]+)=(.*)$/);
-                if (match) {
-                    const key = match[1].trim();
-                    const value = match[2].trim().replace(/^['"]|['"]$/g, ''); // Remove quotes
-                    if (!process.env[key]) {
-                        process.env[key] = value;
-                    }
-                }
-            }
-        }
-    } catch (e) {
-        console.warn('Warning: Could not load .env.local', e.message);
-    }
-}
-
-loadEnv();
+dotenv.config({ path: path.join(__dirname, '..', '.env.local') });
 
 if (!process.env.DATABASE_URL) {
     console.error('❌ DATABASE_URL not found in environment or .env.local');
     process.exit(1);
 }
 
-const sql = neon(process.env.DATABASE_URL);
+const sql = postgres(process.env.DATABASE_URL, { ssl: 'require' });
 
 async function seed() {
     try {
@@ -48,7 +26,7 @@ async function seed() {
             .filter(s => s.length > 0);
 
         for (const statement of statements) {
-            await sql([statement]);
+            await sql.unsafe(statement);
         }
 
         console.log('✅ Database seeded successfully!');

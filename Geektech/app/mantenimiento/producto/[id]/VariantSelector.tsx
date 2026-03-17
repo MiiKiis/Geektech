@@ -5,6 +5,7 @@ import { useState } from 'react';
 interface Variant {
     label: string;
     value: number;
+    extraTitle?: string;
 }
 
 interface VariantSelectorProps {
@@ -60,6 +61,7 @@ export default function VariantSelector({
                     }}>
                         {variants.map((v, i) => {
                             const isSelected = selected?.label === v.label;
+                            const extraTitle = v.extraTitle?.trim();
                             return (
                                 <button
                                     key={i}
@@ -80,6 +82,11 @@ export default function VariantSelector({
                                         transform: isSelected ? 'scale(1.03)' : 'scale(1)',
                                     }}
                                 >
+                                    {extraTitle && (
+                                        <span style={{ fontSize: '9px', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                                            {extraTitle}
+                                        </span>
+                                    )}
                                     {isSelected && (
                                         <span style={{
                                             fontSize: '9px', fontWeight: 800,

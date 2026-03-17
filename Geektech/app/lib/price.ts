@@ -1,4 +1,4 @@
-export type PriceVariant = { label: string; value: string | number };
+export type PriceVariant = { label: string; value: string | number; extraTitle?: string };
 
 /**
  * Parses price variants from either:
@@ -18,7 +18,10 @@ export function parsePrices(str: string | null | undefined): PriceVariant[] {
           .filter((p: any) => p && typeof p.label === 'string')
           .map((p: any) => ({ 
             label: p.label, 
-            value: p.value // Allow both strings and numbers
+            value: p.value, // Allow both strings and numbers
+            extraTitle: typeof p.extraTitle === 'string'
+              ? p.extraTitle
+              : (typeof p.extra_title === 'string' ? p.extra_title : undefined),
           }));
       }
     } catch {
@@ -30,7 +33,7 @@ export function parsePrices(str: string | null | undefined): PriceVariant[] {
   return trimmed.split(',').map(p => {
     const [label, val] = p.split(':');
     const value = (val || '').trim();
-    return { label: label?.trim(), value };
+    return { label: label?.trim(), value, extraTitle: undefined };
   }).filter(x => x.label);
 }
 

@@ -1,25 +1,20 @@
-import { neon } from '@neondatabase/serverless';
+import { sql } from '@/lib/db';
+import { normalizeImagesPayload, normalizeNumericPrice, normalizePosition, normalizeVariantsPayload } from '@/lib/adminProductPayload';
 import { NextResponse } from 'next/server';
-
-const getSQL = () => neon(process.env.DATABASE_URL!);
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id } = await params;
         const { nombre, descripcion, precio, imagen_url, categoria, variantes_precio, posicion, destacado, agotado, imagenes_adicionales } = await req.json();
-        const sql = getSQL();
-        const parsedPos = parseInt(posicion);
-        const validPos = !isNaN(parsedPos) ? parsedPos : null;
-
-        const parsedPrecio = parseFloat(precio);
-        const validPrecio = !isNaN(parsedPrecio) ? parsedPrecio : null;
-
-        const imgs = Array.isArray(imagenes_adicionales) ? JSON.stringify(imagenes_adicionales) : '[]';
+        const validPos = normalizePosition(posicion);
+        const validPrecio = normalizeNumericPrice(precio);
+        const validVariantes = normalizeVariantsPayload(variantes_precio);
+        const imgs = normalizeImagesPayload(imagenes_adicionales);
 
         await sql`UPDATE home_game SET 
-            nombre=${nombre}, descripcion=${descripcion || null}, precio=${validPrecio},
-            imagen_url=${imagen_url || '/img/placeholder.jpg'}, categoria=${categoria || null},
-            variantes_precio=${variantes_precio || null}, posicion=${validPos},
+            nombre=${nombre?.trim()}, descripcion=${descripcion?.trim() || null}, precio=${validPrecio},
+            imagen_url=${imagen_url?.trim() || '/img/placeholder.jpg'}, categoria=${categoria?.trim() || null},
+            variantes_precio=${validVariantes}, posicion=${validPos},
             destacado=${destacado ? true : false}, agotado=${agotado ? true : false}, imagenes_adicionales=${imgs}
             WHERE id=${parseInt(id)}`;
         return NextResponse.json({ success: true });
@@ -29,7 +24,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id } = await params;
-        await getSQL()`DELETE FROM home_game WHERE id=${parseInt(id)}`;
+        await sql`DELETE FROM home_game WHERE id=${parseInt(id)}`;
         return NextResponse.json({ success: true });
     } catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }); }
 }
@@ -37,10 +32,17 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id } = await params;
-        const { posicion } = await req.json();
-        const parsedPos = parseInt(posicion);
-        if (!isNaN(parsedPos)) {
-            await getSQL()`UPDATE home_game SET posicion=${parsedPos} WHERE id=${parseInt(id)}`;
+        const { posicion, destacado, agotado } = await req.json();
+        const idNum = parseInt(id);
+
+        if (posicion !== undefined) {
+            await sql`UPDATE home_game SET posicion=${normalizePosition(posicion)} WHERE id=${idNum}`;
+        }
+        if (destacado !== undefined) {
+            await sql`UPDATE home_game SET destacado=${destacado ? true : false} WHERE id=${idNum}`;
+        }
+        if (agotado !== undefined) {
+            await sql`UPDATE home_game SET agotado=${agotado ? true : false} WHERE id=${idNum}`;
         }
         return NextResponse.json({ success: true });
     } catch (e: any) { return NextResponse.json({ error: e.message }, { status: 500 }); }

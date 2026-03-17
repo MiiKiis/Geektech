@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
-import { neon } from '@neondatabase/serverless';
+import { sql } from '@/lib/db';
 
 export const revalidate = 0; // Sin caché, siempre refleja cambios en vivo
 
 export async function GET() {
     try {
-        const sql = neon(process.env.DATABASE_URL!);
         const products = await sql`
             SELECT * FROM home_game
             ORDER BY destacado DESC NULLS LAST, posicion ASC NULLS LAST, id ASC
