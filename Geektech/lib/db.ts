@@ -1,28 +1,10 @@
 import postgres from 'postgres';
 
-const poolerConnectionString = process.env.DATABASE_URL_POOLER?.trim();
-const directConnectionString = process.env.DATABASE_URL?.trim();
-const connectionString = poolerConnectionString || directConnectionString;
+// Usamos la URL de la base de datos de Docker si existe, si no, probamos con una local para desarrollo
+const connectionString = process.env.DATABASE_URL || 'postgres://postgres:password_segura_aqui@localhost:5432/geektech_db';
 
-if (!connectionString) {
-    throw new Error(
-        'DATABASE_URL/DATABASE_URL_POOLER is not defined. Please check your .env.local file or Vercel project settings.'
-    );
-}
-
-const globalForDb = globalThis as unknown as {
-    sql?: ReturnType<typeof postgres>;
-};
-
-export const sql =
-    globalForDb.sql ??
-    postgres(connectionString, {
-        ssl: 'require',
-    });
-
-if (process.env.NODE_ENV !== 'production') {
-    globalForDb.sql = sql;
-}
+export const sql = postgres(connectionString, {
+    max: 10, // Límite de conexiones para no saturar los 256M de RAM del contenedor de PostgreSQL
+});
 
 export default sql;
-

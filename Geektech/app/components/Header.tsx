@@ -4,20 +4,26 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCart } from '../context/CartContext';
 import { useEffect, useState } from 'react';
+import { useSession, signOut } from 'next-auth/react';
+import { User, LogOut, ShoppingCart } from 'lucide-react';
 
 export default function Header() {
     const pathname = usePathname();
     const { toggleCart, cart } = useCart();
+    const { data: session } = useSession();
 
     const [mounted, setMounted] = useState(false);
     const [menuOpen, setMenuOpen] = useState(false);
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
 
     useEffect(() => { setMounted(true); }, []);
 
     // Cerrar menú al cambiar de página
-    useEffect(() => { setMenuOpen(false); }, [pathname]);
+    useEffect(() => { 
+        setMenuOpen(false); 
+        setUserMenuOpen(false);
+    }, [pathname]);
 
-    // Bloquear scroll cuando el menú está abierto y listeners de resize
     useEffect(() => {
         if (menuOpen) {
             document.body.style.overflow = 'hidden';
@@ -32,7 +38,6 @@ export default function Header() {
         };
 
         window.addEventListener('resize', handleResize);
-
         return () => {
             document.body.style.overflow = '';
             window.removeEventListener('resize', handleResize);
@@ -44,133 +49,115 @@ export default function Header() {
 
     return (
         <>
-            <header role="banner" suppressHydrationWarning>
-                <div className="header-inner" suppressHydrationWarning>
+            <header role="banner" suppressHydrationWarning className="sticky top-0 z-[100] bg-gray-950/80 backdrop-blur-lg border-b border-purple-900/20">
+                <div className="header-inner max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
 
                     {/* LOGO */}
                     <div className="brand-wrapper">
-                        <Link href="/" className="logo-link" aria-label="Inicio">
+                        <Link href="/" className="logo-link flex items-center gap-2 group" aria-label="Inicio">
                             <img
                                 src="/img/principal/logo.png"
                                 alt="Geektech Logo"
-                                className="logo-img"
+                                className="w-10 h-10 object-contain group-hover:scale-110 transition-transform"
                                 onError={(e) => e.currentTarget.style.display = 'none'}
                             />
-                            <span className="brand-name">Geektech</span>
+                            <span className="brand-name text-xl font-black tracking-tighter text-white uppercase group-hover:text-purple-400 transition-colors">Geektech</span>
                         </Link>
                     </div>
 
                     {/* NAV DESKTOP */}
-                    <nav className="main-nav" aria-label="Navegación principal">
-                        <Link href="/" className={`nav-link ${isActive('/')}`}>Inicio</Link>
-                        <Link href="/mantenimiento-componentes" className={`nav-link ${isActive('/mantenimiento-componentes')}`}>Mantenimiento y Tienda</Link>
-                        <Link href="/cuentas-streaming" className={`nav-link ${isActive('/cuentas-streaming')}`}>Streaming</Link>
+                    <nav className="main-nav hidden lg:flex items-center gap-8" aria-label="Navegación principal">
+                        <Link href="/" className={`text-sm font-bold uppercase tracking-widest hover:text-purple-400 transition-colors ${isActive('/') ? 'text-purple-500' : 'text-gray-400'}`}>Inicio</Link>
+                        <Link href="/mantenimiento-componentes" className={`text-sm font-bold uppercase tracking-widest hover:text-purple-400 transition-colors ${isActive('/mantenimiento-componentes') ? 'text-purple-500' : 'text-gray-400'}`}>Mantenimiento</Link>
+                        <Link href="/cuentas-streaming" className={`text-sm font-bold uppercase tracking-widest hover:text-purple-400 transition-colors ${isActive('/cuentas-streaming') ? 'text-purple-500' : 'text-gray-400'}`}>Streaming</Link>
                     </nav>
 
                     {/* ACCIONES */}
-                    <div className="nav-actions">
-                        {/* Discord */}
-                        <a
-                            href="https://discord.gg/HknwKTmkVC"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="social-icon-btn discord-btn"
-                            aria-label="Discord"
-                            suppressHydrationWarning
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" suppressHydrationWarning>
-                                <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.086 2.176 2.419 0 1.334-.966 2.419-2.176 2.419zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.086 2.176 2.419 0 1.334-.966 2.419-2.176 2.419z" />
-                            </svg>
-                        </a>
-
-                        {/* WhatsApp */}
-                        <a
-                            href="https://api.whatsapp.com/send?phone=59168190472"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="social-icon-btn whatsapp-btn"
-                            aria-label="WhatsApp"
-                            suppressHydrationWarning
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" suppressHydrationWarning>
-                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z" />
-                            </svg>
-                        </a>
-
+                    <div className="nav-actions flex items-center gap-4">
                         {/* Carrito */}
-                        <div className="cart-wrapper">
-                            <div
-                                className="cart-icon"
-                                id="cartBtn"
-                                aria-label="Carrito de compras"
-                                onClick={toggleCart}
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(e) => e.key === 'Enter' && toggleCart()}
-                                style={{ cursor: 'pointer' }}
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" suppressHydrationWarning>
-                                    <circle cx="9" cy="21" r="1"></circle>
-                                    <circle cx="20" cy="21" r="1"></circle>
-                                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
-                                </svg>
-                                {mounted && cartCount > 0 && <span className="cart-count">{cartCount}</span>}
-                            </div>
+                        <button
+                            className="relative p-2 text-gray-400 hover:text-purple-400 transition-colors"
+                            onClick={toggleCart}
+                        >
+                            <ShoppingCart size={22} />
+                            {mounted && cartCount > 0 && (
+                                <span className="absolute -top-1 -right-1 bg-purple-600 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-[0_0_10px_rgba(168,85,247,0.5)]">
+                                    {cartCount}
+                                </span>
+                            )}
+                        </button>
+
+                        {/* Usuario */}
+                        <div className="relative">
+                            {session ? (
+                                <div className="relative">
+                                    <button 
+                                        className="p-2 rounded-full border border-purple-500/30 text-purple-400 hover:bg-purple-500/10 transition-all flex items-center justify-center"
+                                        onClick={() => setUserMenuOpen(!userMenuOpen)}
+                                    >
+                                        <User size={20} />
+                                    </button>
+                                    
+                                    {userMenuOpen && (
+                                        <div className="absolute right-0 mt-3 w-56 bg-gray-900 border border-purple-900/50 rounded-2xl shadow-2xl py-3 z-[110] animate-in fade-in slide-in-from-top-2">
+                                            <div className="px-4 pb-3 border-b border-gray-800 mb-2">
+                                                <p className="text-[10px] text-purple-400 font-mono uppercase tracking-widest mb-1">Usuario</p>
+                                                <p className="text-sm text-gray-100 font-bold truncate">{session.user?.name || session.user?.email}</p>
+                                            </div>
+                                            <Link href="/profile" className="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-purple-900/20 hover:text-purple-300 transition-colors">
+                                                Mi Perfil
+                                            </Link>
+                                            {(session.user as any).role === 'admin' && (
+                                                <Link href="/admin/history" className="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-purple-900/20 hover:text-purple-300 transition-colors">
+                                                    Historial de Ventas
+                                                </Link>
+                                            )}
+                                            <div className="mt-2 pt-2 border-t border-gray-800">
+                                                <button 
+                                                    onClick={() => signOut()}
+                                                    className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-950/20 flex items-center gap-2 transition-colors"
+                                                >
+                                                    <LogOut size={16} /> Salir de la red
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <Link 
+                                    href="/login" 
+                                    className="flex items-center gap-2 px-4 py-2 rounded-full border border-purple-500/50 text-purple-400 hover:bg-purple-500 hover:text-white transition-all text-xs font-black uppercase tracking-tighter shadow-[0_0_15px_rgba(168,85,247,0.2)]"
+                                >
+                                    <User size={16} />
+                                    <span>Ingresar</span>
+                                </Link>
+                            )}
                         </div>
 
                         {/* Hamburguesa (mobile) */}
                         <button
-                            className={`hamburger-btn lg:hidden ${menuOpen ? ' open' : ''}`}
+                            className={`flex flex-col gap-1.5 lg:hidden p-2`}
                             onClick={() => setMenuOpen(!menuOpen)}
-                            aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
-                            aria-expanded={menuOpen}
                         >
-                            <span></span>
-                            <span></span>
-                            <span></span>
+                            <span className={`block w-6 h-0.5 bg-gray-300 transition-all ${menuOpen ? 'rotate-45 translate-y-2' : ''}`}></span>
+                            <span className={`block w-6 h-0.5 bg-gray-300 transition-all ${menuOpen ? 'opacity-0' : ''}`}></span>
+                            <span className={`block w-6 h-0.5 bg-gray-300 transition-all ${menuOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
                         </button>
                     </div>
                 </div>
             </header>
 
             {/* MENÚ MOBILE */}
-            <div className={`mobile-menu lg:hidden${menuOpen ? ' open' : ''}`} aria-hidden={!menuOpen}>
-                <nav className="mobile-nav">
-                    <Link href="/" className={`mobile-nav-link ${isActive('/')}`} onClick={() => setMenuOpen(false)}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" suppressHydrationWarning><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22" suppressHydrationWarning></polyline></svg>
-                        Inicio
-                    </Link>
-                    <Link href="/mantenimiento-componentes" className={`mobile-nav-link ${isActive('/mantenimiento-componentes')}`} onClick={() => setMenuOpen(false)}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" suppressHydrationWarning><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" suppressHydrationWarning></path></svg>
-                        Mantenimiento y Tienda
-                    </Link>
-                    <Link href="/cuentas-streaming" className={`mobile-nav-link ${isActive('/cuentas-streaming')}`} onClick={() => setMenuOpen(false)}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" suppressHydrationWarning><polygon points="23 7 16 12 23 17 23 7" suppressHydrationWarning></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2" suppressHydrationWarning></rect></svg>
-                        Cuentas Streaming
-                    </Link>
+            <div className={`fixed inset-0 z-[90] bg-gray-950 transform transition-transform duration-300 lg:hidden ${menuOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+                <nav className="flex flex-col items-center justify-center h-full gap-8">
+                    <Link href="/" className="text-2xl font-black uppercase tracking-widest text-white hover:text-purple-400" onClick={() => setMenuOpen(false)}>Inicio</Link>
+                    <Link href="/mantenimiento-componentes" className="text-2xl font-black uppercase tracking-widest text-white hover:text-purple-400" onClick={() => setMenuOpen(false)}>Mantenimiento</Link>
+                    <Link href="/cuentas-streaming" className="text-2xl font-black uppercase tracking-widest text-white hover:text-purple-400" onClick={() => setMenuOpen(false)}>Streaming</Link>
+                    {!session && (
+                        <Link href="/login" className="mt-4 px-8 py-3 bg-purple-600 rounded-full font-bold uppercase tracking-widest text-white" onClick={() => setMenuOpen(false)}>Ingresar</Link>
+                    )}
                 </nav>
-
-                <div className="mobile-social">
-                    <a href="https://discord.gg/HknwKTmkVC" target="_blank" rel="noopener noreferrer" className="mobile-social-btn discord-btn" aria-label="Discord">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" suppressHydrationWarning>
-                            <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.086 2.176 2.419 0 1.334-.966 2.419-2.176 2.419zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.086 2.176 2.419 0 1.334-.966 2.419-2.176 2.419z" />
-                        </svg>
-                        Discord
-                    </a>
-                    <a href="https://api.whatsapp.com/send?phone=59168190472" target="_blank" rel="noopener noreferrer" className="mobile-social-btn whatsapp-btn" aria-label="WhatsApp">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" suppressHydrationWarning>
-                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z" />
-                        </svg>
-                        WhatsApp
-                    </a>
-                </div>
             </div>
-
-            {/* Overlay */}
-            {menuOpen && (
-                <div className="mobile-overlay lg:hidden" onClick={() => setMenuOpen(false)} aria-hidden="true" />
-            )}
         </>
     );
 }

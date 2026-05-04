@@ -5,6 +5,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import { CartProvider } from './context/CartContext';
 import CartSidebar from './components/CartSidebar';
+import { Providers } from './providers';
 
 const displayFont = Space_Grotesk({
     subsets: ['latin'],
@@ -96,14 +97,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     type="application/ld+json"
                     dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
                 />
-                <CartProvider>
-                    <div className="app-wrapper">
-                        <Header />
-                        {children}
-                        <Footer />
-                        <CartSidebar />
-                    </div>
-                </CartProvider>
+                <Providers>
+                    <CartProvider>
+                        <div className="app-wrapper">
+                            <Header />
+                            {children}
+                            <Footer />
+                            <CartSidebar />
+                        </div>
+                    </CartProvider>
+                </Providers>
             </body>
         </html>
     );
